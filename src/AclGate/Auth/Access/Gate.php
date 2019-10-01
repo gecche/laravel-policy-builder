@@ -1,6 +1,6 @@
 <?php
 
-namespace Gecche\Breeze\Auth\Access;
+namespace Gecche\AclGate\Auth\Access;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;

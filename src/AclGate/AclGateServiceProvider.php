@@ -2,7 +2,7 @@
 
 namespace Gecche\AclGate;
 
-use App\Auth\Access\Gate;
+use Gecche\AclGate\Auth\Access\Gate;
 use Illuminate\Contracts\Auth\Access\Gate as GateContract;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
