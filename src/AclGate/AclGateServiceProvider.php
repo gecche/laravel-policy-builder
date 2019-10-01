@@ -48,8 +48,8 @@ class AclGateServiceProvider extends ServiceProvider
             return app(GateContract::class)->forUser($user)->acl($ability, $arguments);
         });
 
-        $this->loadRoutesFrom(__DIR__.'/routes/Test.php');
-        $this->loadViewsFrom(__DIR__.'/../resources/views', 'test');
+//        $this->loadRoutesFrom(__DIR__.'/routes/Test.php');
+//        $this->loadViewsFrom(__DIR__.'/../resources/views', 'test');
 
 
     }
