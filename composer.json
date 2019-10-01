@@ -1,0 +1,30 @@
+{
+    "name": "gecche/laravel-acl-gate",
+    "description": "A simple way to build allowed list of eloquent models (acl)",
+    "keywords": ["laravel", "eloquent", "model", "acl", "permissions", "gate"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Giacomo Terreni",
+            "email": "giacomo.terreni@gmail.com"
+        }
+    ],
+    "require": {
+        "laravel/framework": "5.5.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Gecche\\AclGate\\": "src/"
+        },
+        "files": [
+
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+
+            ]
+        }
+    }
+}
