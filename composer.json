@@ -12,13 +12,28 @@
     "require": {
         "laravel/framework": "5.5.*"
     },
+    "require-dev": {
+        "codedungeon/phpunit-result-printer": "^0.4.4",
+        "mockery/mockery": "^0.9.4",
+        "orchestra/database": "~3.5.0",
+        "orchestra/testbench": "~3.5.0",
+        "phpunit/phpunit": "^6.2"
+    },
     "autoload": {
         "psr-4": {
-            "Gecche\\AclGate\\": "src/"
+            "Gecche\\AclGate\\": "src"
         },
         "files": [
 
         ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Gecche\\AclGate\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "phpunit"
     },
     "extra": {
         "laravel": {
