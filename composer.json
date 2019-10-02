@@ -20,6 +20,9 @@
         "phpunit/phpunit": "^6.2"
     },
     "autoload": {
+        "classmap": [
+            "tests/database/factories"
+        ],
         "psr-4": {
             "Gecche\\AclGate\\": "src"
         },
@@ -28,9 +31,6 @@
         ]
     },
     "autoload-dev": {
-        "classmap": [
-            "tests/database/factories"
-        ],
         "psr-4": {
             "Gecche\\AclGate\\Tests\\": "tests/src"
         }

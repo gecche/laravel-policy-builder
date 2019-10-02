@@ -24,8 +24,10 @@ class TestServiceProvider extends BaseServiceProvider
      */
     public function boot()
     {
+
+        echo __DIR__ . '../database/migrations';
         $this->loadMigrationsFrom(
-            __DIR__ . '/database/migrations'
+            __DIR__ . '../database/migrations'
         );
     }
 }
