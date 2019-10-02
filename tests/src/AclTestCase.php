@@ -13,11 +13,13 @@ use Gecche\AclTest\Tests\Models\User;
 use Gecche\AclGate\AclGateServiceProvider as ServiceProvider;
 use Gecche\AclTest\Tests\Models\Code;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 
 class AclTestCase extends \Orchestra\Testbench\TestCase
 {
 
     use RefreshDatabase;
+
     /**
      * Setup the test environment.
      *
@@ -28,11 +30,11 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
         parent::setUp();
 
         $this->withFactories(
-            __DIR__ . '../database/factories'
+            __DIR__ . '/../database/factories'
         );
-        app()->bind(AuthServiceProvider::class, function($app) { // not a service provider but the target of service provider
-            return new \Gecche\AclGate\Tests\AuthServiceProvider($app);
-        });
+//        app()->bind(AuthServiceProvider::class, function($app) { // not a service provider but the target of service provider
+//            return new \Gecche\AclGate\Tests\AuthServiceProvider($app);
+//        });
 
         $this->artisan('migrate', ['--database' => 'testbench']);
 
@@ -43,8 +45,25 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
 
         factory(User::class, 10)->create();
 
+        Code::create([
+            'code' => '001',
+            'description' => 'test1',
+        ]);
 
+        Code::create([
+            'code' => '010',
+            'description' => null,
+        ]);
 
+        Code::create([
+            'code' => '002',
+            'description' => null,
+        ]);
+
+        Code::create([
+            'code' => '012',
+            'description' => 'test2',
+        ]);
     }
 
     /**
@@ -62,6 +81,12 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
             'database' => ':memory:',
             'prefix' => '',
         ]);
+        $app['config']->set('auth.providers', [
+            'users' => [
+                'driver' => 'eloquent',
+                'model' => User::class,
+            ]
+        ]);
     }
 
     /**
@@ -73,24 +98,96 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
     {
         return [
             ServiceProvider::class,
-            TestServiceProvider::class
+            TestServiceProvider::class,
+            \Gecche\AclGate\Tests\AuthServiceProvider::class
         ];
     }
 
 
-    public function testBasicTest()
+    /*
+     * The code policy in these tests simply allows for:
+     * - all the codes to user 1
+     * - all the codes with code starting with "00" to user 2
+     * - all the codes with a null description to user 3
+     * - only code with id 1 to all other users
+     * - no codes for guests
+     *
+     */
+
+
+    /*
+     * Test authentication with user 1
+     */
+    public function testAuthUser1()
     {
 
 
-        echo "PROVA " . User::count() . "\n";
+        $user = Auth::loginUsingId(1);
 
-        $code = Code::create([
-            'code' => '001',
-            'description' => 'test1',
-        ]);
+        $this->assertAuthenticated();
 
-        $code->acl()->get();
+        $this->assertAuthenticatedAs($user);
 
-        $this->assertTrue(true);
+        $codes = Code::acl()->get()->toArray();
+
+
+        $this->assertEquals(count($codes),4);
+    }
+
+    /*
+     * Test authentication with user 2
+     */
+    public function testAuthUser2()
+    {
+
+
+        $user = Auth::loginUsingId(2);
+
+        $this->assertAuthenticated();
+
+        $this->assertAuthenticatedAs($user);
+
+        $codes = Code::acl()->get()->pluck('code','id')->toArray();
+
+        $this->assertEquals(count($codes),2);
+
+        $this->assertEquals([1 => '001',3 => '002'],$codes);
+
+    }
+
+    /*
+    * Test authentication with user 3
+    */
+    public function testAuthUser3()
+    {
+
+
+        $user = Auth::loginUsingId(3);
+
+        $this->assertAuthenticated();
+
+        $this->assertAuthenticatedAs($user);
+
+        $codes = Code::acl()->get()->pluck('code','id')->toArray();
+
+        $this->assertEquals(count($codes),2);
+
+        $this->assertEquals([2 => '010',3 => '002'],$codes);
+
+    }
+
+    /*
+    * Test guest user
+    */
+    public function testGuestUser()
+    {
+
+
+        $this->assertGuest();
+
+        $codes = Code::acl()->get()->pluck('code','id')->toArray();
+
+        $this->assertEquals(count($codes),0);
+        
     }
 }

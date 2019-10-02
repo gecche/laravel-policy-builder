@@ -18,7 +18,7 @@ class User extends Model implements
     use Notifiable;
 
 
-    public $ownerships = true;
+    public $ownerships = false;
     /**
      * The attributes that are mass assignable.
      *
