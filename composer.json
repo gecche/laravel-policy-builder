@@ -29,8 +29,7 @@
     },
     "autoload-dev": {
         "classmap": [
-            "tests/database/seeds",
-            "tests/database/factories"
+            "test/database/factories"
         ],
         "psr-4": {
             "Gecche\\AclGate\\Tests\\": "tests"

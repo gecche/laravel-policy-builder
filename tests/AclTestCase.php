@@ -28,7 +28,7 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
         parent::setUp();
 
         $this->withFactories(
-            __DIR__ . '/database/factories'
+            __DIR__ . 'database/factories'
         );
         app()->bind(AuthServiceProvider::class, function($app) { // not a service provider but the target of service provider
             return new \Gecche\AclGate\Tests\AuthServiceProvider($app);
