@@ -28,6 +28,10 @@
         ]
     },
     "autoload-dev": {
+        "classmap": [
+            "tests/database/seeds",
+            "tests/database/factories"
+        ],
         "psr-4": {
             "Gecche\\AclGate\\Tests\\": "tests"
         }

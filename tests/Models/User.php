@@ -1,7 +1,5 @@
 <?php namespace Gecche\AclTest\Tests\Models;
 
-namespace App;
-
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Auth\Passwords\CanResetPassword;
 use Illuminate\Database\Eloquent\Model;
