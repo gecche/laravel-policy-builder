@@ -105,7 +105,7 @@ class Gate extends GateLaravel
             return $aclNoneFunc($builder);
         }
 
-        return $builder->where($builder->getKeyName(),-1);
+        return $builder->where($builder->getModel()->getKeyName(),-1);
     }
 
     /**
