@@ -4,8 +4,8 @@ use Gecche\AclTest\Tests\Policies\CodePolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 use Gecche\AclTest\Tests\Models\Code;
-use App\Policies\UserPolicy;
 
+use Illuminate\Support\Facades\Gate as GateFacade;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -27,6 +27,12 @@ class AuthServiceProvider extends ServiceProvider
     public function boot()
     {
         $this->registerPolicies();
+
+        // Implicitly grant "Admin" role all permissions
+        // This works in the app by using gate-related functions like auth()->user->can() and @can()
+        GateFacade::before(function ($user, $ability) {
+            return $user->getKey() == 5 ? true : null;
+        });
 
     }
 

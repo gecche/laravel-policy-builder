@@ -14,6 +14,7 @@ use Gecche\AclGate\AclGateServiceProvider as ServiceProvider;
 use Gecche\AclTest\Tests\Models\Code;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class AclTestCase extends \Orchestra\Testbench\TestCase
 {
@@ -112,6 +113,9 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
      * - only code with id 1 to all other users
      * - no codes for guests
      *
+     * Furthermore in \Gecche\AclGate\Tests\AuthServiceProvider, a before callback is registeres to grant access to
+     * user 5, so usign the aclAll method.
+     *
      */
 
 
@@ -124,14 +128,12 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
 
         $user = Auth::loginUsingId(1);
 
-        $this->assertAuthenticated();
-
         $this->assertAuthenticatedAs($user);
 
         $codes = Code::acl()->get()->toArray();
 
 
-        $this->assertEquals(count($codes),4);
+        $this->assertEquals(count($codes), 4);
     }
 
     /*
@@ -143,15 +145,11 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
 
         $user = Auth::loginUsingId(2);
 
-        $this->assertAuthenticated();
-
         $this->assertAuthenticatedAs($user);
 
-        $codes = Code::acl()->get()->pluck('code','id')->toArray();
+        $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
 
-        $this->assertEquals(count($codes),2);
-
-        $this->assertEquals([1 => '001',3 => '002'],$codes);
+        $this->assertEquals([1 => '001', 3 => '002'], $codes);
 
     }
 
@@ -164,30 +162,181 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
 
         $user = Auth::loginUsingId(3);
 
-        $this->assertAuthenticated();
-
         $this->assertAuthenticatedAs($user);
 
-        $codes = Code::acl()->get()->pluck('code','id')->toArray();
+        $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
 
-        $this->assertEquals(count($codes),2);
-
-        $this->assertEquals([2 => '010',3 => '002'],$codes);
+        $this->assertEquals([2 => '010', 3 => '002'], $codes);
 
     }
 
     /*
-    * Test guest user
-    */
+     * Test authentication with user 4
+     */
+    public function testAuthUser4()
+    {
+
+
+        $user = Auth::loginUsingId(4);
+
+        $this->assertAuthenticatedAs($user);
+
+        $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
+
+        $this->assertEquals([1 => '001'], $codes);
+
+    }
+
+    /*
+     * Test authentication with user 4
+     */
+    public function testAuthUser5()
+    {
+
+
+        $user = Auth::loginUsingId(5);
+
+        $this->assertAuthenticatedAs($user);
+
+        $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
+
+        $this->assertEquals(count($codes), 4);
+
+//        $this->assertEquals([1 => '001'], $codes);
+
+    }
+
+    /*
+ * Test authentication with user 4
+ */
+    public function testAuthUser5AclAll()
+    {
+
+
+        $user = Auth::loginUsingId(5);
+
+        $this->assertAuthenticatedAs($user);
+
+        $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
+
+        $this->assertEquals(count($codes), 4);
+
+        Gate::setAclAll(function ($builder) {
+            return $builder->where('id', 4);
+        });
+
+        $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
+
+        $this->assertEquals([4 => '012'], $codes);
+
+    }
+
+    /*
+     * Test guest user
+     */
     public function testGuestUser()
     {
 
 
         $this->assertGuest();
 
-        $codes = Code::acl()->get()->pluck('code','id')->toArray();
+        $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
 
-        $this->assertEquals(count($codes),0);
-        
+        $this->assertEquals(count($codes), 0);
+
+    }
+
+
+    /*
+     * Test guest with another aclNone function
+     */
+
+    public function testGuestUserAclGuest()
+    {
+
+
+        $this->assertGuest();
+
+        $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
+
+        $this->assertEquals(count($codes), 0);
+
+        Gate::setAclGuest(function ($builder) {
+            return $builder->where('id', 4);
+        });
+
+        $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
+
+        $this->assertEquals([4 => '012'], $codes);
+
+    }
+
+
+    /*
+     * Test user 1 and 5 with User model (no policy defined)
+     */
+
+    public function testAuthUsers1UserModel()
+    {
+
+        $user = Auth::loginUsingId(1);
+
+        $this->assertAuthenticatedAs($user);
+
+        $users = User::acl()->get()->pluck('name', 'id')->toArray();
+
+        $this->assertEquals([], $users);
+
+        Gate::setAclNone(function ($builder) {
+            return $builder->where('id', 4);
+        });
+
+        $users = User::acl()->get()->pluck('name', 'id')->toArray();
+        $this->assertEquals(count($users), 1);
+
+    }
+
+    public function testAuthUsers1UserModelAclNone()
+    {
+
+        $user = Auth::loginUsingId(1);
+
+        $this->assertAuthenticatedAs($user);
+
+        $users = User::acl()->get()->pluck('name', 'id')->toArray();
+
+        $this->assertEquals([], $users);
+
+
+
+    }
+
+    public function testAuthUsers5UserModel()
+    {
+
+        $user = Auth::loginUsingId(5);
+
+        $this->assertAuthenticatedAs($user);
+
+        $users = User::acl()->get()->pluck('name', 'id')->toArray();
+
+        $this->assertEquals(count($users),10);
+
+    }
+
+    /*
+     * Test guest with User model (no policy defined)
+     */
+
+    public function testGuestUserModel()
+    {
+
+
+        $this->assertGuest();
+
+        $users = User::acl()->get()->pluck('name', 'id')->toArray();
+
+        $this->assertEquals([], $users);
+
     }
 }

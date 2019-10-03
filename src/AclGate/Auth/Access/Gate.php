@@ -2,6 +2,7 @@
 
 namespace Gecche\AclGate\Auth\Access;
 
+use Illuminate\Contracts\Container\Container;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 use InvalidArgumentException;
@@ -12,21 +13,65 @@ class Gate extends GateLaravel
 
 
     /**
-     * @var null|\Closure
+     * @var array
      */
-    protected $aclNone = null;
+    protected $aclMethods = [];
 
     /**
-     * @var null|\Closure
+     * Create a new gate instance.
+     *
+     * @param  \Illuminate\Contracts\Container\Container  $container
+     * @param  callable  $userResolver
+     * @param  array  $abilities
+     * @param  array  $policies
+     * @param  array  $beforeCallbacks
+     * @param  array  $afterCallbacks
+     * @param  \Closure|null  $aclAll
+     * @param  \Closure|null  $aclNone
+     * @return void
      */
-    protected $aclAll = null;
+    public function __construct(Container $container, callable $userResolver, array $abilities = [],
+                                array $policies = [], array $beforeCallbacks = [], array $afterCallbacks = [],
+                                array $aclMethods = [])
+    {
+        parent::__construct($container, $userResolver, $abilities, $policies, $beforeCallbacks, $afterCallbacks);
+
+        $this->aclMethods = $aclMethods;
+    }
+
+    /**
+     * Get a gate instance for the given user.
+     *
+     * @param  \Illuminate\Contracts\Auth\Authenticatable|mixed  $user
+     * @return static
+     */
+    public function forUser($user)
+    {
+        $callback = function () use ($user) {
+            return $user;
+        };
+
+        return new static(
+            $this->container, $callback, $this->abilities,
+            $this->policies, $this->beforeCallbacks, $this->afterCallbacks,
+            $this->aclMethods
+        );
+    }
+
+    /**
+     * @param array $aclMethods
+     */
+    public function setAclMethods($aclMethods)
+    {
+        $this->aclMethods = $aclMethods;
+    }
 
     /**
      * @param \Closure|null $aclNone
      */
     public function setAclNone($aclNone)
     {
-        $this->aclNone = $aclNone;
+        $this->aclMethods['none'] = $aclNone;
     }
 
     /**
@@ -34,9 +79,16 @@ class Gate extends GateLaravel
      */
     public function setAclAll($aclAll)
     {
-        $this->aclAll = $aclAll;
+        $this->aclMethods['all'] = $aclAll;
     }
 
+    /**
+     * @param \Closure|null $aclAll
+     */
+    public function setAclGuest($aclGuest)
+    {
+        $this->aclMethods['guest'] = $aclGuest;
+    }
 
 
     /**
@@ -58,7 +110,7 @@ class Gate extends GateLaravel
         }
 
         if (! $user = $this->resolveUser()) {
-            return $this->buildAclNone($builder,$modelClass);
+            return $this->buildAclMethod('guest', $builder);
         }
 
         $arguments = Arr::wrap($arguments);
@@ -72,10 +124,10 @@ class Gate extends GateLaravel
 
 
         if ($result === true) {
-            return $this->buildAclAll($builder,$modelClass);
+            $result = $this->buildAclMethod('all', $builder);
         }
         if ($result === false) {
-            return $this->buildAclNone($builder,$modelClass);
+            $result = $this->buildAclMethod('none', $builder);
         }
 
         if (is_null($result)) {
@@ -98,28 +150,27 @@ class Gate extends GateLaravel
      * @param Builder $builder
      * @return mixed
      */
-    protected function buildAclNone($builder) {
+    protected function buildAclMethod($type,$builder) {
 
-        if (!is_null($this->aclNone)) {
-            $aclNoneFunc = $this->aclNone;
-            return $aclNoneFunc($builder);
+        if (!in_array($type,['all','none','guest'])) {
+            throw new InvalidArgumentException('acl method type not allowed: it must be "all", "none" or "guest"');
         }
 
-        return $builder->where($builder->getModel()->getKeyName(),-1);
-    }
+        $aclType = Arr::get($this->aclMethods,$type);
 
-    /**
-     * @param Builder $builder
-     * @return mixed
-     */
-    protected function buildAclAll($builder) {
-
-        if (!is_null($this->aclAll)) {
-            $aclAllFunc = $this->aclAll;
-            return $aclAllFunc($builder);
+        if (!is_null($aclType)) {
+            $aclTypeFunc = $aclType;
+            return $aclTypeFunc($builder);
         }
 
-        return $builder;
+        switch ($type) {
+            case 'all':
+                return $builder;
+            case 'none':
+                return $builder->whereRaw(0);
+            default:
+                return $builder->whereRaw(0);
+        }
     }
 
 
@@ -162,7 +213,7 @@ class Gate extends GateLaravel
         }
 
         return function () use ($builder) {
-            return $this->buildAclNone($builder);
+            return $this->buildAclMethod('none',$builder);
         };
     }
 
