@@ -98,22 +98,11 @@ class Gate extends GateLaravel
     public function acl($ability, $arguments = []) {
 
 
-        $modelClass = Arr::get($arguments,0);
+        $arguments = Arr::wrap($arguments);
+
         $builder = Arr::get($arguments,1);
 
-        if (!$modelClass) {
-            throw new InvalidArgumentException($modelClass . ' not defined');
-        }
-        if (!$builder) {
-            $builder = new $modelClass;
-            $arguments[1] = $builder;
-        }
-
-        if (! $user = $this->resolveUser()) {
-            return $this->buildAclMethod('guest', $builder);
-        }
-
-        $arguments = Arr::wrap($arguments);
+        $user = $this->resolveUser();
 
         // First we will call the "before" callbacks for the Gate. If any of these give
         // back a non-null response, we will immediately return that result in order
@@ -137,11 +126,9 @@ class Gate extends GateLaravel
         // After calling the authorization callback, we will call the "after" callbacks
         // that are registered with the Gate, which allows a developer to do logging
         // if that is required for this application. Then we'll return the result.
-        $this->callAfterCallbacks(
+        return $this->callAfterCallbacks(
             $user, $ability, $arguments, $result
         );
-
-        return $result;
 
     }
 
@@ -208,13 +195,21 @@ class Gate extends GateLaravel
             return $callback;
         }
 
-        if (isset($this->abilities[$ability])) {
+        if (isset($this->abilities[$ability]) &&
+            $this->canBeCalledWithUser($user, $this->abilities[$ability])) {
             return $this->abilities[$ability];
+        }
+
+        if (!$user) {
+            return function () use ($builder) {
+                return $this->buildAclMethod('guest',$builder);
+            };
         }
 
         return function () use ($builder) {
             return $this->buildAclMethod('none',$builder);
         };
+
     }
 
 }

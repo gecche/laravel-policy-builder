@@ -65,6 +65,8 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
             'code' => '012',
             'description' => 'test2',
         ]);
+
+        echo "USERS: " . User::count() . " --- CODES: " . Code::count() . " --- \n\n";
     }
 
     /**
@@ -242,34 +244,10 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
 
         $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
 
-        $this->assertEquals(count($codes), 0);
+        $this->assertEquals([2 => '010'], $codes);
 
     }
 
-
-    /*
-     * Test guest with another aclNone function
-     */
-
-    public function testGuestUserAclGuest()
-    {
-
-
-        $this->assertGuest();
-
-        $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
-
-        $this->assertEquals(count($codes), 0);
-
-        Gate::setAclGuest(function ($builder) {
-            return $builder->where('id', 4);
-        });
-
-        $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
-
-        $this->assertEquals([4 => '012'], $codes);
-
-    }
 
 
     /*
@@ -339,4 +317,29 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
         $this->assertEquals([], $users);
 
     }
+
+    /*
+     * Test guest with User model (no policy defined) and a custom AclGuest function
+     */
+
+    public function testGuestUserModelAclGuest()
+    {
+
+
+        $this->assertGuest();
+
+        $users = User::acl()->get()->pluck('name', 'id')->toArray();
+
+        $this->assertEquals([], $users);
+
+        Gate::setAclGuest(function ($builder) {
+            return $builder->where('id', 4);
+        });
+
+        $users = User::acl()->get()->pluck('id', 'id')->toArray();
+
+        $this->assertEquals([4 => 4], $users);
+
+    }
+
 }
