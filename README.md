@@ -15,6 +15,7 @@ This package adds the `acl` method to Eloquent Models which returns an "acl filt
  Laravel  | AclGate
 :---------|:----------
  5.5.x    | 1.1.x
+ 5.6.x    | 1.2.x
 
 ### Installation
 
@@ -23,7 +24,7 @@ Add gecche/laravel-acl-gate as a requirement to composer.json:
 ```javascript
 {
     "require": {
-        "gecche/laravel-acl-gate": "1.1.*"
+        "gecche/laravel-acl-gate": "1.2.*"
     }
 }
 ```
