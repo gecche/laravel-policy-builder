@@ -40,7 +40,7 @@
     "extra": {
         "laravel": {
             "providers": [
-
+                "Gecche\\AclGate\\AclGateServiceProvider"
             ]
         }
     }
