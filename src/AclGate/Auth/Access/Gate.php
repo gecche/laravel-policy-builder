@@ -217,4 +217,15 @@ class Gate extends GateLaravel
         };
     }
 
+    public function aclAll($builder) {
+        return $this->buildAclMethod('all', $builder);
+    }
+
+    public function aclNone($builder) {
+        return $this->buildAclMethod('none', $builder);
+    }
+
+    public function aclGuest($builder) {
+        return $this->buildAclMethod('guest', $builder);
+    }
 }
