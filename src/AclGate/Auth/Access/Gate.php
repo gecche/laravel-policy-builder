@@ -5,6 +5,7 @@ namespace Gecche\AclGate\Auth\Access;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Illuminate\Auth\Access\Gate as GateLaravel;
 
@@ -16,6 +17,11 @@ class Gate extends GateLaravel
      * @var array
      */
     protected $aclMethods = [];
+
+    /**
+     * @var array
+     */
+    protected $beforeAclCallbacks = [];
 
     /**
      * Create a new gate instance.
@@ -32,11 +38,12 @@ class Gate extends GateLaravel
      */
     public function __construct(Container $container, callable $userResolver, array $abilities = [],
                                 array $policies = [], array $beforeCallbacks = [], array $afterCallbacks = [],
-                                array $aclMethods = [])
+                                array $aclMethods = [], array $beforeAclCallbacks = [])
     {
         parent::__construct($container, $userResolver, $abilities, $policies, $beforeCallbacks, $afterCallbacks);
 
         $this->aclMethods = $aclMethods;
+        $this->beforeAclCallbacks = $beforeAclCallbacks;
     }
 
     /**
@@ -54,7 +61,7 @@ class Gate extends GateLaravel
         return new static(
             $this->container, $callback, $this->abilities,
             $this->policies, $this->beforeCallbacks, $this->afterCallbacks,
-            $this->aclMethods
+            $this->aclMethods, $this->beforeAclCallbacks
         );
     }
 
@@ -65,6 +72,7 @@ class Gate extends GateLaravel
     {
         $this->aclMethods = $aclMethods;
     }
+
 
     /**
      * @param \Closure|null $aclNone
@@ -90,22 +98,48 @@ class Gate extends GateLaravel
         $this->aclMethods['guest'] = $aclGuest;
     }
 
+    /**
+     * Register a callback to run before all Gate checks.
+     *
+     * @param  callable  $callback
+     * @return $this
+     */
+    public function beforeAcl(callable $callback)
+    {
+        $this->beforeAclCallbacks[] = $callback;
+
+        return $this;
+    }
+
+    /**
+     * Call all of the before callbacks and return if a result is given.
+     *
+     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user
+     * @param  string  $listType
+     * @param  string  $modelClassName
+     * @param  array  $arguments
+     * @return bool|null
+     */
+    protected function callBeforeAclCallbacks($user, $modelClassName, $listType, array $arguments)
+    {
+        $arguments = array_merge([$user, $modelClassName, $listType], [$arguments]);
+
+        foreach ($this->beforeAclCallbacks as $before) {
+            if (! is_null($result = $before(...$arguments))) {
+                return $result;
+            }
+        }
+    }
 
     /**
      * @param Builder $builder
      * @param  \Illuminate\Contracts\Auth\Authenticatable $user
      */
-    public function acl($ability, $arguments = []) {
+    public function acl($modelClassName, $builder = null, $listType = null, $arguments = []) {
 
 
-        $modelClass = Arr::get($arguments,0);
-        $builder = Arr::get($arguments,1);
-
-        if (!$modelClass) {
-            throw new InvalidArgumentException($modelClass . ' not defined');
-        }
         if (!$builder) {
-            $builder = new $modelClass;
+            $builder = new $modelClassName;
             $arguments[1] = $builder;
         }
 
@@ -118,8 +152,8 @@ class Gate extends GateLaravel
         // First we will call the "before" callbacks for the Gate. If any of these give
         // back a non-null response, we will immediately return that result in order
         // to let the developers override all checks for some authorization cases.
-        $result = $this->callBeforeCallbacks(
-            $user, $ability, $arguments
+        $result = $this->callBeforeAclCallbacks(
+            $user, $modelClassName, $listType, $arguments
         );
 
 
@@ -131,15 +165,8 @@ class Gate extends GateLaravel
         }
 
         if (is_null($result)) {
-            $result = $this->callAclCallback($user, $ability, $arguments);
+            $result = $this->callAclCallback($user, $modelClassName, $builder, $listType, $arguments);
         }
-
-        // After calling the authorization callback, we will call the "after" callbacks
-        // that are registered with the Gate, which allows a developer to do logging
-        // if that is required for this application. Then we'll return the result.
-        $this->callAfterCallbacks(
-            $user, $ability, $arguments, $result
-        );
 
         return $result;
 
@@ -182,11 +209,11 @@ class Gate extends GateLaravel
      * @param  array  $arguments
      * @return bool
      */
-    protected function callAclCallback($user, $ability, array $arguments)
+    protected function callAclCallback($user, $modelClassName, $builder, $listType, array $arguments)
     {
-        $callback = $this->resolveAclCallback($user, $ability, $arguments);
+        $callback = $this->resolveAclCallback($user, $modelClassName, $builder, $listType, $arguments);
 
-        return $callback($user, ...$arguments);
+        return $callback($user, $builder, ...$arguments);
     }
 
 
@@ -198,24 +225,53 @@ class Gate extends GateLaravel
      * @param  array  $arguments
      * @return callable
      */
-    protected function resolveAclCallback($user, $ability, array $arguments)
+    protected function resolveAclCallback($user, $modelClassName, $builder, $listType, array $arguments)
     {
-        $builder = Arr::get($arguments,1);
-
-        if (isset($arguments[0]) &&
-            ! is_null($policy = $this->getPolicyFor($arguments[0])) &&
-            $callback = $this->resolvePolicyCallback($user, $ability, $arguments, $policy)) {
+        if (!is_null($policy = $this->getPolicyFor($modelClassName)) &&
+            $callback = $this->resolvePolicyAclCallback($user, $builder, $listType, $arguments, $policy)) {
             return $callback;
-        }
-
-        if (isset($this->abilities[$ability])) {
-            return $this->abilities[$ability];
         }
 
         return function () use ($builder) {
             return $this->buildAclMethod('none',$builder);
         };
     }
+
+    /**
+     * Resolve the callback for a policy check.
+     *
+     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user
+     * @param  string  $ability
+     * @param  array  $arguments
+     * @param  mixed  $policy
+     * @return bool|callable
+     */
+    protected function resolvePolicyAclCallback($user, $builder, $listType, array $arguments, $policy)
+    {
+        if (! is_callable([$policy, $this->formatListTypeToAclMethod($listType)])) {
+            return false;
+        }
+
+        return function () use ($user, $listType, $builder, $arguments, $policy) {
+            $aclMethod = $this->formatListTypeToAclMethod($listType);
+
+            return is_callable([$policy, $aclMethod])
+                ? $policy->{$aclMethod}($user, $builder, ...$arguments)
+                : false;
+        };
+    }
+
+    /**
+     * Format the policy ability into a method name.
+     *
+     * @param  string  $ability
+     * @return string
+     */
+    protected function formatListTypeToAclMethod($listType = null)
+    {
+        return 'acl'. ($listType ?: Str::camel($listType));
+    }
+
 
     public function aclAll($builder) {
         return $this->buildAclMethod('all', $builder);

@@ -36,16 +36,15 @@ class AclGateServiceProvider extends ServiceProvider
     public function boot()
     {
 
-        Builder::macro('acl', function ($user = null, $ability = 'acl') {
+        Builder::macro('acl', function ($user = null, $ability = 'acl', $listType = null, $arguments = []) {
 
             $model = $this->model;
-            $arguments = [get_class($model), $this];
 
             if (is_null($user)) {
                 $user = Auth::user();
             }
 
-            return app(GateContract::class)->forUser($user)->acl($ability, $arguments);
+            return app(GateContract::class)->forUser($user)->acl($ability, get_class($model), $this, $listType, $arguments);
         });
 
 //        $this->loadRoutesFrom(__DIR__.'/routes/Test.php');
