@@ -47,9 +47,6 @@ class PolicyBuilderServiceProvider extends ServiceProvider
             return app(GateContract::class)->forUser($user)->acl(get_class($model), $this, $listType, $arguments);
         });
 
-//        $this->loadRoutesFrom(__DIR__.'/routes/Test.php');
-//        $this->loadViewsFrom(__DIR__.'/../resources/views', 'test');
-
 
     }
 

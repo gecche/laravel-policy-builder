@@ -17,7 +17,7 @@ class Gate extends GateLaravel implements PolicyBuilder
     /**
      * @var array
      */
-    protected $aclMethods = [];
+    protected $builderMethods = [];
 
     /**
      * @var array
@@ -33,17 +33,17 @@ class Gate extends GateLaravel implements PolicyBuilder
      * @param  array  $policies
      * @param  array  $beforeCallbacks
      * @param  array  $afterCallbacks
-     * @param  \Closure|null  $aclAll
-     * @param  \Closure|null  $aclNone
+     * @param  \Closure|null  $allBuilder
+     * @param  \Closure|null  $noneBuilder
      * @return void
      */
     public function __construct(Container $container, callable $userResolver, array $abilities = [],
                                 array $policies = [], array $beforeCallbacks = [], array $afterCallbacks = [],
-                                array $aclMethods = [], array $beforeAclCallbacks = [])
+                                array $builderMethods = [], array $beforeAclCallbacks = [])
     {
         parent::__construct($container, $userResolver, $abilities, $policies, $beforeCallbacks, $afterCallbacks);
 
-        $this->aclMethods = $aclMethods;
+        $this->builderMethods = $builderMethods;
         $this->beforeAclCallbacks = $beforeAclCallbacks;
     }
 
@@ -62,41 +62,41 @@ class Gate extends GateLaravel implements PolicyBuilder
         return new static(
             $this->container, $callback, $this->abilities,
             $this->policies, $this->beforeCallbacks, $this->afterCallbacks,
-            $this->aclMethods, $this->beforeAclCallbacks
+            $this->builderMethods, $this->beforeAclCallbacks
         );
     }
 
     /**
-     * @param array $aclMethods
+     * @param array $builderMethods
      */
-    public function setAclMethods($aclMethods)
+    public function setBuilderMethods($builderMethods)
     {
-        $this->aclMethods = $aclMethods;
+        $this->builderMethods = $builderMethods;
     }
 
 
     /**
-     * @param \Closure|null $aclNone
+     * @param \Closure|null $noneBuilder
      */
-    public function setAclNone($aclNone)
+    public function setNoneBuilder($noneBuilder)
     {
-        $this->aclMethods['none'] = $aclNone;
+        $this->builderMethods['none'] = $noneBuilder;
     }
 
     /**
-     * @param \Closure|null $aclAll
+     * @param \Closure|null $allBuilder
      */
-    public function setAclAll($aclAll)
+    public function setAllBuilder($allBuilder)
     {
-        $this->aclMethods['all'] = $aclAll;
+        $this->builderMethods['all'] = $allBuilder;
     }
 
     /**
-     * @param \Closure|null $aclAll
+     * @param \Closure|null $guestBuilder
      */
-    public function setAclGuest($aclGuest)
+    public function setGuestBuilder($guestBuilder)
     {
-        $this->aclMethods['guest'] = $aclGuest;
+        $this->builderMethods['guest'] = $guestBuilder;
     }
 
     /**
@@ -121,9 +121,9 @@ class Gate extends GateLaravel implements PolicyBuilder
      * @param  array  $arguments
      * @return bool|null
      */
-    protected function callBeforeAclCallbacks($user, $modelClassName, $listType, array $arguments)
+    protected function callBeforeAclCallbacks($user, $modelClassName, $listType, $builder, array $arguments)
     {
-        $arguments = array_merge([$user, $modelClassName, $listType], [$arguments]);
+        $arguments = array_merge([$user, $modelClassName, $listType, $builder], [$arguments]);
 
         foreach ($this->beforeAclCallbacks as $before) {
             if (! is_null($result = $before(...$arguments))) {
@@ -145,7 +145,7 @@ class Gate extends GateLaravel implements PolicyBuilder
         }
 
         if (! $user = $this->resolveUser()) {
-            return $this->buildAclMethod('guest', $builder);
+            return $this->buildBuilderMethod('guest', $builder);
         }
 
         $arguments = Arr::wrap($arguments);
@@ -154,18 +154,11 @@ class Gate extends GateLaravel implements PolicyBuilder
         // back a non-null response, we will immediately return that result in order
         // to let the developers override all checks for some authorization cases.
         $result = $this->callBeforeAclCallbacks(
-            $user, $modelClassName, $listType, $arguments
+            $user, $modelClassName, $listType, $builder, $arguments
         );
 
         if (is_null($result)) {
             $result = $this->callAclCallback($user, $modelClassName, $builder, $listType, $arguments);
-        }
-
-        if ($result === true) {
-            $result = $this->buildAclMethod('all', $builder);
-        }
-        if ($result === false) {
-            $result = $this->buildAclMethod('none', $builder);
         }
 
         return $result;
@@ -177,13 +170,13 @@ class Gate extends GateLaravel implements PolicyBuilder
      * @param Builder $builder
      * @return mixed
      */
-    protected function buildAclMethod($type,$builder) {
+    protected function buildBuilderMethod($type,$builder) {
 
         if (!in_array($type,['all','none','guest'])) {
             throw new InvalidArgumentException('acl method type not allowed: it must be "all", "none" or "guest"');
         }
 
-        $aclType = Arr::get($this->aclMethods,$type);
+        $aclType = Arr::get($this->builderMethods,$type);
 
         if (!is_null($aclType)) {
             $aclTypeFunc = $aclType;
@@ -194,6 +187,8 @@ class Gate extends GateLaravel implements PolicyBuilder
             case 'all':
                 return $builder;
             case 'none':
+                return $builder->whereRaw(0);
+            case 'guest':
                 return $builder->whereRaw(0);
             default:
                 return $builder->whereRaw(0);
@@ -233,7 +228,7 @@ class Gate extends GateLaravel implements PolicyBuilder
         }
 
         return function () use ($builder) {
-            return $this->buildAclMethod('none',$builder);
+            return $this->none($builder);
         };
     }
 
@@ -255,7 +250,7 @@ class Gate extends GateLaravel implements PolicyBuilder
         return function () use ($user, $listType, $builder, $arguments, $policy) {
 
             $result = $this->callPolicyBeforeAcl(
-                $policy, $user, $listType, $arguments
+                $policy, $user, $listType, $builder, $arguments
             );
 
             // When we receive a non-null result from this before method, we will return it
@@ -283,10 +278,10 @@ class Gate extends GateLaravel implements PolicyBuilder
      * @param  array  $arguments
      * @return mixed
      */
-    protected function callPolicyBeforeAcl($policy, $user, $listType, $arguments)
+    protected function callPolicyBeforeAcl($policy, $user, $listType, $builder, $arguments)
     {
         if (method_exists($policy, 'beforeAcl')) {
-            return $policy->beforeAcl($user, $listType, ...$arguments);
+            return $policy->beforeAcl($user, $listType, $builder, ...$arguments);
         }
     }
 
@@ -302,15 +297,15 @@ class Gate extends GateLaravel implements PolicyBuilder
     }
 
 
-    public function aclAll($builder) {
-        return $this->buildAclMethod('all', $builder);
+    public function all($builder) {
+        return $this->buildBuilderMethod('all', $builder);
     }
 
-    public function aclNone($builder) {
-        return $this->buildAclMethod('none', $builder);
+    public function none($builder) {
+        return $this->buildBuilderMethod('none', $builder);
     }
 
-    public function aclGuest($builder) {
-        return $this->buildAclMethod('guest', $builder);
+    public function guest($builder) {
+        return $this->buildBuilderMethod('guest', $builder);
     }
 }

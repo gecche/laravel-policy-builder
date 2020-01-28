@@ -18,9 +18,9 @@ interface PolicyBuilder
 
     public function beforeAcl(callable $callback);
 
-    public function aclAll($builder);
+    public function all($builder);
 
-    public function aclNone($builder);
+    public function none($builder);
 
     /**
      * @param Builder $builder
@@ -28,27 +28,27 @@ interface PolicyBuilder
      */
     public function acl($modelClassName, $builder = null, $listType = null, $arguments = []);
 
-    public function aclGuest($builder);
+    public function guest($builder);
 
     /**
      * @param \Closure|null $aclAll
      */
-    public function setAclGuest($aclGuest);
+    public function setGuestBuilder($guestBuilder);
 
     /**
      * @param array $aclMethods
      */
-    public function setAclMethods($aclMethods);
+    public function setBuilderMethods($builderMethods);
 
     /**
      * @param \Closure|null $aclNone
      */
-    public function setAclNone($aclNone);
+    public function setNoneBuilder($noneBuilder);
 
     /**
      * @param \Closure|null $aclAll
      */
-    public function setAclAll($aclAll);
+    public function setAllBuilder($allBuilder);
 
 
 }

@@ -114,7 +114,7 @@ class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
      * - no codes for guests
      *
      * Furthermore in \Gecche\PolicyBuilder\Tests\AuthServiceProvider, a before callback is registeres to grant access to
-     * user 5, so usign the aclAll method.
+     * user 5, so usign the all method.
      *
      */
 
@@ -280,7 +280,7 @@ class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
     /*
  * Test authentication with user 4
  */
-    public function testAuthUser5AclAll()
+    public function testAuthUser5all()
     {
 
 
@@ -292,7 +292,7 @@ class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
 
         $this->assertEquals(count($codes), 4);
 
-        Gate::setAclAll(function ($builder) {
+        Gate::setAllBuilder(function ($builder) {
             return $builder->where('id', 4);
         });
 
@@ -332,7 +332,7 @@ class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
 
         $this->assertEquals(count($codes), 0);
 
-        Gate::setAclGuest(function ($builder) {
+        Gate::setGuestBuilder(function ($builder) {
             return $builder->where('id', 4);
         });
 
@@ -358,7 +358,7 @@ class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
 
         $this->assertEquals([], $users);
 
-        Gate::setAclNone(function ($builder) {
+        Gate::setNoneBuilder(function ($builder) {
             return $builder->where('id', 4);
         });
 

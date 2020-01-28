@@ -2,6 +2,7 @@
 
 namespace Gecche\PolicyBuilder\Tests\Policies;
 
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -10,10 +11,10 @@ class CodePolicy
     use HandlesAuthorization;
 
 
-    public function beforeAcl($user, $listType) {
+    public function beforeAcl($user, $listType, $builder) {
 
         if ($listType == 'verypublic') {
-            return true;
+            return Gate::all($builder);
         }
 
 
