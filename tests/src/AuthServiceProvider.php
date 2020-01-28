@@ -30,9 +30,10 @@ class AuthServiceProvider extends ServiceProvider
 
         // Implicitly grant "Admin" role all permissions
         // This works in the app by using gate-related functions like auth()->user->can() and @can()
-        GateFacade::before(function ($user, $ability) {
+        GateFacade::beforeAcl(function ($user, $modelClassName, $listType) {
             return $user->getKey() == 5 ? true : null;
         });
+
 
     }
 

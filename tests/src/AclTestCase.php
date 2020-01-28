@@ -206,6 +206,77 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
 
     }
 
+
+    /*
+     * Test authentication with user 1 (list type admin)
+     */
+    public function testCodeAdminListAuthUser1()
+    {
+
+
+        $user = Auth::loginUsingId(1);
+
+        $this->assertAuthenticatedAs($user);
+
+        $codes = Code::acl('admin')->get()->pluck('code', 'id')->toArray();
+
+        $this->assertEquals(count($codes), 4);
+
+//        $this->assertEquals([1 => '001'], $codes);
+
+    }
+
+    /*
+     * Test authentication with user 1 (list type admin)
+     */
+    public function testCodeAdminListAuthUser2And3()
+    {
+
+
+        $user = Auth::loginUsingId(2);
+
+        $this->assertAuthenticatedAs($user);
+
+        $codes = Code::acl('admin')->get()->pluck('code', 'id')->toArray();
+
+        $this->assertEquals([1 => '001'], $codes);
+
+        $user = Auth::loginUsingId(3);
+
+        $this->assertAuthenticatedAs($user);
+
+        $codes = Code::acl('admin')->get()->pluck('code', 'id')->toArray();
+
+        $this->assertEquals([1 => '001'], $codes);
+
+    }
+
+
+    /*
+ * Test authentication with user 4
+ */
+    public function testCodeVerypublicListAuthUser1And4()
+    {
+
+
+        $user = Auth::loginUsingId(1);
+
+        $this->assertAuthenticatedAs($user);
+
+        $codes = Code::acl('verypublic')->get()->pluck('code', 'id')->toArray();
+
+        $this->assertEquals(count($codes), 4);
+
+        $user = Auth::loginUsingId(4);
+
+        $this->assertAuthenticatedAs($user);
+
+        $codes = Code::acl('verypublic')->get()->pluck('code', 'id')->toArray();
+
+        $this->assertEquals(count($codes), 4);
+
+    }
+
     /*
  * Test authentication with user 4
  */

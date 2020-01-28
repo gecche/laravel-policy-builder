@@ -2,6 +2,7 @@
 
 namespace Gecche\AclGate\Auth\Access;
 
+use Gecche\AclGate\Contracts\PolicyBuilder;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
@@ -9,7 +10,7 @@ use Illuminate\Support\Str;
 use InvalidArgumentException;
 use Illuminate\Auth\Access\Gate as GateLaravel;
 
-class Gate extends GateLaravel
+class Gate extends GateLaravel implements PolicyBuilder
 {
 
 
@@ -156,16 +157,15 @@ class Gate extends GateLaravel
             $user, $modelClassName, $listType, $arguments
         );
 
+        if (is_null($result)) {
+            $result = $this->callAclCallback($user, $modelClassName, $builder, $listType, $arguments);
+        }
 
         if ($result === true) {
             $result = $this->buildAclMethod('all', $builder);
         }
         if ($result === false) {
             $result = $this->buildAclMethod('none', $builder);
-        }
-
-        if (is_null($result)) {
-            $result = $this->callAclCallback($user, $modelClassName, $builder, $listType, $arguments);
         }
 
         return $result;
@@ -248,17 +248,46 @@ class Gate extends GateLaravel
      */
     protected function resolvePolicyAclCallback($user, $builder, $listType, array $arguments, $policy)
     {
-        if (! is_callable([$policy, $this->formatListTypeToAclMethod($listType)])) {
-            return false;
-        }
+//        if (! is_callable([$policy, $this->formatListTypeToAclMethod($listType)])) {
+//            return false;
+//        }
 
         return function () use ($user, $listType, $builder, $arguments, $policy) {
+
+            $result = $this->callPolicyBeforeAcl(
+                $policy, $user, $listType, $arguments
+            );
+
+            // When we receive a non-null result from this before method, we will return it
+            // as the "final" results. This will allow developers to override the checks
+            // in this policy to return the result for all rules defined in the class.
+            if (! is_null($result)) {
+                return $result;
+            }
+
             $aclMethod = $this->formatListTypeToAclMethod($listType);
 
             return is_callable([$policy, $aclMethod])
                 ? $policy->{$aclMethod}($user, $builder, ...$arguments)
                 : false;
         };
+    }
+
+
+    /**
+     * Call the "before" method on the given policy, if applicable.
+     *
+     * @param  mixed  $policy
+     * @param  \Illuminate\Contracts\Auth\Authenticatable  $user
+     * @param  string  $ability
+     * @param  array  $arguments
+     * @return mixed
+     */
+    protected function callPolicyBeforeAcl($policy, $user, $listType, $arguments)
+    {
+        if (method_exists($policy, 'beforeAcl')) {
+            return $policy->beforeAcl($user, $listType, ...$arguments);
+        }
     }
 
     /**
