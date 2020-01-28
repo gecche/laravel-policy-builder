@@ -1,8 +1,8 @@
 <?php
 
-namespace Gecche\AclGate\Contracts;
+namespace Gecche\PolicyBuilder\Contracts;
 
-use Gecche\AclGate\Auth\Access\Gate;
+use Gecche\PolicyBuilder\Auth\Access\Gate;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 

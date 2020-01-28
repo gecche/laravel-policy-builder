@@ -1,14 +1,14 @@
 <?php
 
-namespace Gecche\AclGate;
+namespace Gecche\PolicyBuilder;
 
-use Gecche\AclGate\Auth\Access\Gate;
+use Gecche\PolicyBuilder\Auth\Access\Gate;
 use Illuminate\Contracts\Auth\Access\Gate as GateContract;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
 
-class AclGateServiceProvider extends ServiceProvider
+class PolicyBuilderServiceProvider extends ServiceProvider
 {
 
 

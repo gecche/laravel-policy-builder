@@ -1,5 +1,5 @@
 {
-    "name": "gecche/laravel-acl-gate",
+    "name": "gecche/laravel-policy-builder",
     "description": "A simple way to build allowed list of eloquent models (acl)",
     "keywords": ["laravel", "eloquent", "model", "acl", "permissions", "gate"],
     "license": "MIT",
@@ -23,7 +23,7 @@
             "tests/database/factories"
         ],
         "psr-4": {
-            "Gecche\\AclGate\\": "src"
+            "Gecche\\PolicyBuilder\\": "src"
         },
         "files": [
 
@@ -31,7 +31,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Gecche\\AclGate\\Tests\\": "tests/src"
+            "Gecche\\PolicyBuilder\\Tests\\": "tests/src"
         }
     },
     "scripts": {
@@ -40,7 +40,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Gecche\\AclGate\\AclGateServiceProvider"
+                "Gecche\\PolicyBuilder\\PolicyBuilderServiceProvider"
             ]
         }
     }
