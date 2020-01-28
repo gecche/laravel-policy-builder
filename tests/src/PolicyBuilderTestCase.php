@@ -6,17 +6,17 @@
  * Time: 11:15
  */
 
-namespace Gecche\AclGate\Tests;
+namespace Gecche\PolicyBuilder\Tests;
 
 use App\Providers\AuthServiceProvider;
-use Gecche\AclTest\Tests\Models\User;
-use Gecche\AclGate\AclGateServiceProvider as ServiceProvider;
-use Gecche\AclTest\Tests\Models\Code;
+use Gecche\PolicyBuilder\Tests\Models\User;
+use Gecche\PolicyBuilder\PolicyBuilderServiceProvider as ServiceProvider;
+use Gecche\PolicyBuilder\Tests\Models\Code;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
-class AclTestCase extends \Orchestra\Testbench\TestCase
+class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
 {
 
     use RefreshDatabase;
@@ -34,7 +34,7 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
             __DIR__ . '/../database/factories'
         );
 //        app()->bind(AuthServiceProvider::class, function($app) { // not a service provider but the target of service provider
-//            return new \Gecche\AclGate\Tests\AuthServiceProvider($app);
+//            return new \Gecche\PolicyBuilder\Tests\AuthServiceProvider($app);
 //        });
 
         $this->artisan('migrate', ['--database' => 'testbench']);
@@ -100,7 +100,7 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
         return [
             ServiceProvider::class,
             TestServiceProvider::class,
-            \Gecche\AclGate\Tests\AuthServiceProvider::class
+            \Gecche\PolicyBuilder\Tests\AuthServiceProvider::class
         ];
     }
 
@@ -113,7 +113,7 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
      * - only code with id 1 to all other users
      * - no codes for guests
      *
-     * Furthermore in \Gecche\AclGate\Tests\AuthServiceProvider, a before callback is registeres to grant access to
+     * Furthermore in \Gecche\PolicyBuilder\Tests\AuthServiceProvider, a before callback is registeres to grant access to
      * user 5, so usign the aclAll method.
      *
      */

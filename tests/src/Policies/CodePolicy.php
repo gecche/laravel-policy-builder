@@ -1,6 +1,6 @@
 <?php
 
-namespace Gecche\AclTest\Tests\Policies;
+namespace Gecche\PolicyBuilder\Tests\Policies;
 
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Database\Eloquent\Builder;
