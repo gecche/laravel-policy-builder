@@ -20,6 +20,7 @@ Laravel's Gate and Policies are very useful tools if you want to check if a user
  Laravel  | PolicyBuilder
 :---------|:----------
  5.5.x    | 1.1.x
+ 5.6.x    | 1.2.x
 
 ### Installation
 
@@ -28,7 +29,7 @@ Add gecche/laravel-policy-builder as a requirement to composer.json:
 ```javascript
 {
     "require": {
-        "gecche/laravel-policy-builder": "1.1.*"
+        "gecche/laravel-policy-builder": "1.2.*"
     }
 }
 ```

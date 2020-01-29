@@ -33,7 +33,7 @@ class CodePolicy
      * - all the codes with a null description to user 3
      * - only code with id 1 to all other users
      *
-     * @param   \Illuminate\Contracts\Auth\Authenticatable $user
+     * @param   \Illuminate\Contracts\Auth\Authenticatable|null $user
      * @param  Builder $builder
      * @return mixed
      */
@@ -62,7 +62,7 @@ class CodePolicy
      * - all the codes with a null description to user 3
      * - only code with id 1 to all other users
      *
-     * @param   \Illuminate\Contracts\Auth\Authenticatable $user
+     * @param   \Illuminate\Contracts\Auth\Authenticatable|null $user
      * @param  Builder $builder
      * @return mixed
      */

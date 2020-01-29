@@ -331,7 +331,7 @@ class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
         $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
 
         $this->assertEquals(count($codes), 0);
-        
+
     }
 
 
