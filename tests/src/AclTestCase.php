@@ -6,17 +6,17 @@
  * Time: 11:15
  */
 
-namespace Gecche\AclGate\Tests;
+namespace Gecche\PolicyBuilder\Tests;
 
 use App\Providers\AuthServiceProvider;
-use Gecche\AclTest\Tests\Models\User;
-use Gecche\AclGate\AclGateServiceProvider as ServiceProvider;
-use Gecche\AclTest\Tests\Models\Code;
+use Gecche\PolicyBuilder\Tests\Models\User;
+use Gecche\PolicyBuilder\PolicyBuilderServiceProvider as ServiceProvider;
+use Gecche\PolicyBuilder\Tests\Models\Code;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
+use Gecche\PolicyBuilder\Facades\PolicyBuilder;
 
-class AclTestCase extends \Orchestra\Testbench\TestCase
+class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
 {
 
     use RefreshDatabase;
@@ -34,7 +34,7 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
             __DIR__ . '/../database/factories'
         );
 //        app()->bind(AuthServiceProvider::class, function($app) { // not a service provider but the target of service provider
-//            return new \Gecche\AclGate\Tests\AuthServiceProvider($app);
+//            return new \Gecche\PolicyBuilder\Tests\AuthServiceProvider($app);
 //        });
 
         $this->artisan('migrate', ['--database' => 'testbench']);
@@ -100,7 +100,7 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
         return [
             ServiceProvider::class,
             TestServiceProvider::class,
-            \Gecche\AclGate\Tests\AuthServiceProvider::class
+            \Gecche\PolicyBuilder\Tests\AuthServiceProvider::class
         ];
     }
 
@@ -113,8 +113,8 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
      * - only code with id 1 to all other users
      * - no codes for guests
      *
-     * Furthermore in \Gecche\AclGate\Tests\AuthServiceProvider, a before callback is registeres to grant access to
-     * user 5, so usign the aclAll method.
+     * Furthermore in \Gecche\PolicyBuilder\Tests\AuthServiceProvider, a before callback is registeres to grant access to
+     * user 5, so usign the all method.
      *
      */
 
@@ -206,10 +206,81 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
 
     }
 
+
+    /*
+     * Test authentication with user 1 (list type admin)
+     */
+    public function testCodeAdminListAuthUser1()
+    {
+
+
+        $user = Auth::loginUsingId(1);
+
+        $this->assertAuthenticatedAs($user);
+
+        $codes = Code::acl(null,'admin')->get()->pluck('code', 'id')->toArray();
+
+        $this->assertEquals(count($codes), 4);
+
+//        $this->assertEquals([1 => '001'], $codes);
+
+    }
+
+    /*
+     * Test authentication with user 1 (list type admin)
+     */
+    public function testCodeAdminListAuthUser2And3()
+    {
+
+
+        $user = Auth::loginUsingId(2);
+
+        $this->assertAuthenticatedAs($user);
+
+        $codes = Code::acl(null,'admin')->get()->pluck('code', 'id')->toArray();
+
+        $this->assertEquals([1 => '001'], $codes);
+
+        $user = Auth::loginUsingId(3);
+
+        $this->assertAuthenticatedAs($user);
+
+        $codes = Code::acl(null,'admin')->get()->pluck('code', 'id')->toArray();
+
+        $this->assertEquals([1 => '001'], $codes);
+
+    }
+
+
     /*
  * Test authentication with user 4
  */
-    public function testAuthUser5AclAll()
+    public function testCodeVerypublicListAuthUser1And4()
+    {
+
+
+        $user = Auth::loginUsingId(1);
+
+        $this->assertAuthenticatedAs($user);
+
+        $codes = Code::acl(null,'verypublic')->get()->pluck('code', 'id')->toArray();
+
+        $this->assertEquals(count($codes), 4);
+
+        $user = Auth::loginUsingId(4);
+
+        $this->assertAuthenticatedAs($user);
+
+        $codes = Code::acl(null,'verypublic')->get()->pluck('code', 'id')->toArray();
+
+        $this->assertEquals(count($codes), 4);
+
+    }
+
+    /*
+ * Test authentication with user 4
+ */
+    public function testAuthUser5all()
     {
 
 
@@ -221,7 +292,7 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
 
         $this->assertEquals(count($codes), 4);
 
-        Gate::setAclAll(function ($builder) {
+        PolicyBuilder::setAllBuilder(function ($builder) {
             return $builder->where('id', 4);
         });
 
@@ -261,14 +332,6 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
 
         $this->assertEquals(count($codes), 0);
 
-        Gate::setAclGuest(function ($builder) {
-            return $builder->where('id', 4);
-        });
-
-        $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
-
-        $this->assertEquals([4 => '012'], $codes);
-
     }
 
 
@@ -287,7 +350,7 @@ class AclTestCase extends \Orchestra\Testbench\TestCase
 
         $this->assertEquals([], $users);
 
-        Gate::setAclNone(function ($builder) {
+        PolicyBuilder::setNoneBuilder(function ($builder) {
             return $builder->where('id', 4);
         });
 
