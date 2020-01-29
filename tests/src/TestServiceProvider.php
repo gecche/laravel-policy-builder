@@ -1,4 +1,4 @@
-<?php namespace Gecche\AclGate\Tests;
+<?php namespace Gecche\PolicyBuilder\Tests;
 
 use Illuminate\Support\ServiceProvider as BaseServiceProvider;
 

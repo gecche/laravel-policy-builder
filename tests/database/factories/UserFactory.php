@@ -13,7 +13,7 @@ use Faker\Generator as Faker;
 |
 */
 
-$factory->define(Gecche\AclTest\Tests\Models\User::class, function (Faker $faker) {
+$factory->define(Gecche\PolicyBuilder\Tests\Models\User::class, function (Faker $faker) {
     return [
         'name' => $faker->name,
         'email' => $faker->unique()->safeEmail,
