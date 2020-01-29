@@ -28,12 +28,6 @@ interface PolicyBuilder
      */
     public function acl($modelClassName, $builder = null, $listType = null, $arguments = []);
 
-    public function guest($builder);
-
-    /**
-     * @param \Closure|null $aclAll
-     */
-    public function setGuestBuilder($guestBuilder);
 
     /**
      * @param array $aclMethods

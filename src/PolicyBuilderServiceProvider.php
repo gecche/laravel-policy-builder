@@ -2,8 +2,10 @@
 
 namespace Gecche\PolicyBuilder;
 
-use Gecche\PolicyBuilder\Auth\Access\Gate;
-use Illuminate\Contracts\Auth\Access\Gate as GateContract;
+
+use Gecche\PolicyBuilder\Auth\Access\PolicyBuilder;
+use Gecche\PolicyBuilder\Contracts\PolicyBuilder as PolicyBuilderContract;
+
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
@@ -20,10 +22,10 @@ class PolicyBuilderServiceProvider extends ServiceProvider
     public function register()
     {
 
-        $this->app->singleton(GateContract::class, function ($app) {
-            return new Gate($app, function () use ($app) {
+        $this->app->singleton(PolicyBuilderContract::class, function ($app) {
+            return new PolicyBuilder($app, function () use ($app) {
                 return call_user_func($app['auth']->userResolver());
-            });
+            }, $app[\Illuminate\Contracts\Auth\Access\Gate::class]);
         });
 
     }
@@ -36,7 +38,7 @@ class PolicyBuilderServiceProvider extends ServiceProvider
     public function boot()
     {
 
-        Builder::macro('acl', function ($listType = null, $user = null,  $arguments = []) {
+        Builder::macro('acl', function ($user = null,  $context = null, $arguments = []) {
 
             $model = $this->model;
 
@@ -44,7 +46,7 @@ class PolicyBuilderServiceProvider extends ServiceProvider
                 $user = Auth::user();
             }
 
-            return app(GateContract::class)->forUser($user)->acl(get_class($model), $this, $listType, $arguments);
+            return app(PolicyBuilderContract::class)->forUser($user)->acl(get_class($model), $this, $context, $arguments);
         });
 
 

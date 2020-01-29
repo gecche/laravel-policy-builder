@@ -14,7 +14,7 @@ use Gecche\PolicyBuilder\PolicyBuilderServiceProvider as ServiceProvider;
 use Gecche\PolicyBuilder\Tests\Models\Code;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
+use Gecche\PolicyBuilder\Facades\PolicyBuilder;
 
 class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
 {
@@ -218,7 +218,7 @@ class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
 
         $this->assertAuthenticatedAs($user);
 
-        $codes = Code::acl('admin')->get()->pluck('code', 'id')->toArray();
+        $codes = Code::acl(null,'admin')->get()->pluck('code', 'id')->toArray();
 
         $this->assertEquals(count($codes), 4);
 
@@ -237,7 +237,7 @@ class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
 
         $this->assertAuthenticatedAs($user);
 
-        $codes = Code::acl('admin')->get()->pluck('code', 'id')->toArray();
+        $codes = Code::acl(null,'admin')->get()->pluck('code', 'id')->toArray();
 
         $this->assertEquals([1 => '001'], $codes);
 
@@ -245,7 +245,7 @@ class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
 
         $this->assertAuthenticatedAs($user);
 
-        $codes = Code::acl('admin')->get()->pluck('code', 'id')->toArray();
+        $codes = Code::acl(null,'admin')->get()->pluck('code', 'id')->toArray();
 
         $this->assertEquals([1 => '001'], $codes);
 
@@ -263,7 +263,7 @@ class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
 
         $this->assertAuthenticatedAs($user);
 
-        $codes = Code::acl('verypublic')->get()->pluck('code', 'id')->toArray();
+        $codes = Code::acl(null,'verypublic')->get()->pluck('code', 'id')->toArray();
 
         $this->assertEquals(count($codes), 4);
 
@@ -271,7 +271,7 @@ class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
 
         $this->assertAuthenticatedAs($user);
 
-        $codes = Code::acl('verypublic')->get()->pluck('code', 'id')->toArray();
+        $codes = Code::acl(null,'verypublic')->get()->pluck('code', 'id')->toArray();
 
         $this->assertEquals(count($codes), 4);
 
@@ -292,7 +292,7 @@ class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
 
         $this->assertEquals(count($codes), 4);
 
-        Gate::setAllBuilder(function ($builder) {
+        PolicyBuilder::setAllBuilder(function ($builder) {
             return $builder->where('id', 4);
         });
 
@@ -331,15 +331,7 @@ class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
         $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
 
         $this->assertEquals(count($codes), 0);
-
-        Gate::setGuestBuilder(function ($builder) {
-            return $builder->where('id', 4);
-        });
-
-        $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
-
-        $this->assertEquals([4 => '012'], $codes);
-
+        
     }
 
 
@@ -358,7 +350,7 @@ class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
 
         $this->assertEquals([], $users);
 
-        Gate::setNoneBuilder(function ($builder) {
+        PolicyBuilder::setNoneBuilder(function ($builder) {
             return $builder->where('id', 4);
         });
 
