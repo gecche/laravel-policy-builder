@@ -17,7 +17,7 @@ Laravel's Gate and Policies are very useful tools if you want to check if a user
 
 ### Version Compatibility
 
- Laravel  | AclGate
+ Laravel  | PolicyBuilder
 :---------|:----------
  5.5.x    | 1.1.x
 
@@ -57,6 +57,10 @@ class CodePolicy
      */
     public function acl($user, $builder)
     {
+        if (is_null($user)) {
+            return $builder->where('id',-1);
+        }
+        
         switch ($user->getKey()) {
             case 1:
                 return $builder;
@@ -74,7 +78,8 @@ class CodePolicy
 ```
 
 In this example, User 1 has access to all the codes, User 2 has access to all the codes with `code` starting with `00`, 
-User 3 has access to all codes with a null `description` and finally all the other users have no access to any code.
+User 3 has access to all codes with a null `description` and finally both the guest user (null) and all the others 
+registered users have no access to any code.
 
 #### Get the allowed list for an user
 
@@ -98,11 +103,11 @@ Now the lists is built with respect to the `Code` models allowed to user 2.
 #### Changing the "context" of the list
 
 Usually, given a model and an user, the allowed list of models is built always in the same way within an app.
- But let us suppose to want a second list of models for a given user if the context changes. For example, 
+ But let us suppose we want a second list of models for a given user if the context changes. For example, 
  a standard list of models which an user can access and a second list of models which the same user 
    can access with editing privileges.
    
-   In that case, you can pass the context as the second argument in the builder method as follows:
+   In that case, you can pass the "context" as the second argument in the builder method as follows:
    
 
 ```php
@@ -118,22 +123,23 @@ In the Code policy you have to define accordingly the  `aclEditing` method as do
 
 ### Beyond the basics
 
-The package extends the standard Laravel's Gate with the methods for handling Eloquent Builders and returning 
-filtered lists of allowed methods.
+The package provides the `PolicyBuilderServiceProvider` which wraps the standard Laravel's Gate class 
+and makes available methods for handling Eloquent Builders and returning filtered lists of allowed models.
+Also the PolicyBuilder facade is provided. 
 
-#### Basic default builder methods: `all`, `none` and `guest` 
+#### Basic default builder methods: `all` and `none` 
 
-Gate has now three public methods, namely `all`, `none` and `guest`, which basically, given an Eloquent Builder, 
-add to it the filters for building an acl list when all the models are allowed, when none of the models are allowed 
-and models which are allowed to the guest user.
+The PolicyBuilder has two public methods, namely `all` and `none` which basically, given an Eloquent Builder, 
+add to it the filters for building an acl list when either all or none of the models are allowed.
 
-Basically, the `all` method returns the builder itself with no added filters, the `none` method adds a filter for 
-returning an empty collection of models and by default the `guest` method returns the same as `none`.
+Basically, the `all` method returns the builder itself with no added filters while the `none` method adds a filter for 
+returning an empty collection of models.
 
 The return of above methods can be customized by using 
-the `setAllBuilder`, `setNoneBuilder` and `setGuestBuilder` methods.
+the `setAllBuilder` and `setNoneBuilder` methods.
 
-In the following example we change the previous `CodePolicy` class by using default builder methods and leaving the semantic as before.
+In the following example we change the previous `CodePolicy` class by using default builder methods and leaving 
+the semantic as before.
 
 ```php
 
@@ -152,15 +158,19 @@ class CodePolicy
      */
     public function acl($user, $builder)
     {
+        if (is_null($user)) {
+            return PolicyBuilder::none($builder);
+        }
+        
         switch ($user->getKey()) {
             case 1:
-                return Gate::all($builder);
+                return PolicyBuilder::all($builder);
             case 2:
                 return $builder->where('code','like','00%');
             case 3:
                 return $builder->whereNull('description');
             default:
-                return Gate::none($builder);
+                return PolicyBuilder::none($builder);
 
         }
 
@@ -170,14 +180,13 @@ class CodePolicy
 
 #### `beforeAcl` Gate method
  
-The standard Laravel's Gate has a `before` method for registering "before" callbacks to be processed 
- before ability or policy methods. In the same way the extended Gate has a `beforeAcl` method for registering
+Laravel's Gate has a `before` method for registering "before" callbacks to be processed 
+ before ability or policy methods. 
+ In the same way the PolicyBuilder has a `beforeAcl` method for registering
   "beforeAcl" callbacks.
   Whereas the "before" callbacks must return either a boolean value or null, the "beforeAcl" callbacks must 
   return either an Eloquent Builder or null.
-  
-  Note that no "afterAcl" callbacks are handled by the package.
-  
+    
 #### `beforeAcl` Policy method
 
 Like the above `beforeAcl` method, also into single policies a `beforeAcl` method could be defined.
