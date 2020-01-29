@@ -2,7 +2,7 @@
 
 namespace Gecche\PolicyBuilder\Tests\Policies;
 
-use Illuminate\Support\Facades\Gate;
+use Gecche\PolicyBuilder\Facades\PolicyBuilder;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -14,7 +14,7 @@ class CodePolicy
     public function beforeAcl($user, $listType, $builder) {
 
         if ($listType == 'verypublic') {
-            return Gate::all($builder);
+            return PolicyBuilder::all($builder);
         }
 
 
@@ -37,6 +37,10 @@ class CodePolicy
      */
     public function acl($user, $builder)
     {
+        if (is_null($user)) {
+            return PolicyBuilder::none($builder);
+        }
+
         switch ($user->getKey()) {
             case 1:
                 return $builder;
@@ -66,6 +70,9 @@ class CodePolicy
      */
     public function aclAdmin($user, $builder)
     {
+        if (is_null($user)) {
+            return PolicyBuilder::none($builder);
+        }
         switch ($user->getKey()) {
             case 1:
                 return $builder;

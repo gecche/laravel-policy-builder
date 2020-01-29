@@ -5,7 +5,7 @@ use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvid
 
 use Gecche\PolicyBuilder\Tests\Models\Code;
 
-use Illuminate\Support\Facades\Gate;
+use Gecche\PolicyBuilder\Facades\PolicyBuilder;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -30,8 +30,8 @@ class AuthServiceProvider extends ServiceProvider
 
         // Implicitly grant "Admin" role all permissions
         // This works in the app by using gate-related functions like auth()->user->can() and @can()
-        Gate::beforeAcl(function ($user, $modelClassName, $listType, $builder) {
-            return $user->getKey() == 5 ? Gate::all($builder) : null;
+        PolicyBuilder::beforeAcl(function ($user, $modelClassName, $context, $builder) {
+            return ($user && $user->getKey() == 5) ? PolicyBuilder::all($builder) : null;
         });
 
 

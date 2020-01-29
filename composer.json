@@ -41,7 +41,10 @@
         "laravel": {
             "providers": [
                 "Gecche\\PolicyBuilder\\PolicyBuilderServiceProvider"
-            ]
+            ],
+            "aliases": {
+                "PolicyBuilder": "Gecche\\PolicyBuilder\\Facades\\PolicyBuilder"
+            }
         }
     }
 }
