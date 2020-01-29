@@ -17,7 +17,9 @@ class CodePolicy
             return PolicyBuilder::all($builder);
         }
 
-
+        if (is_null($user)) {
+            return PolicyBuilder::none($builder);
+        }
 
         return null;
 
@@ -37,10 +39,6 @@ class CodePolicy
      */
     public function acl($user, $builder)
     {
-        if (is_null($user)) {
-            return PolicyBuilder::none($builder);
-        }
-
         switch ($user->getKey()) {
             case 1:
                 return $builder;
@@ -70,9 +68,7 @@ class CodePolicy
      */
     public function aclAdmin($user, $builder)
     {
-        if (is_null($user)) {
-            return PolicyBuilder::none($builder);
-        }
+
         switch ($user->getKey()) {
             case 1:
                 return $builder;
