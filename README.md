@@ -21,6 +21,7 @@ Laravel's Gate and Policies are very useful tools if you want to check if a user
 :---------|:----------
  5.5.x    | 1.1.x
  5.6.x    | 1.2.x
+ 5.7.x    | 1.3.x
 
 ### Installation
 
@@ -29,7 +30,7 @@ Add gecche/laravel-policy-builder as a requirement to composer.json:
 ```javascript
 {
     "require": {
-        "gecche/laravel-policy-builder": "1.2.*"
+        "gecche/laravel-policy-builder": "1.3.*"
     }
 }
 ```
@@ -100,6 +101,7 @@ To get the lists for, namely, user 2, simply do:
 ```
 
 Now the lists is built with respect to the `Code` models allowed to user 2.
+If you want to get the list for the guest user, use `false`.
 
 #### Changing the "context" of the list
 

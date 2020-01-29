@@ -4,6 +4,7 @@ namespace Gecche\PolicyBuilder\Tests\Policies;
 
 use Gecche\PolicyBuilder\Facades\PolicyBuilder;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 
 class CodePolicy
@@ -37,7 +38,7 @@ class CodePolicy
      * @param  Builder $builder
      * @return mixed
      */
-    public function acl($user, $builder)
+    public function acl(?Authenticatable $user, $builder)
     {
         switch ($user->getKey()) {
             case 1:
@@ -66,7 +67,7 @@ class CodePolicy
      * @param  Builder $builder
      * @return mixed
      */
-    public function aclAdmin($user, $builder)
+    public function aclAdmin(?Authenticatable $user, $builder)
     {
 
         switch ($user->getKey()) {
