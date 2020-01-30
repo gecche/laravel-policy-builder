@@ -18,9 +18,9 @@ interface PolicyBuilder
 
     public function beforeAcl(callable $callback);
 
-    public function all($builder);
+    public function all($builder,$modelClassName = null);
 
-    public function none($builder);
+    public function none($builder,$modelClassName = null);
 
     /**
      * @param Builder $builder
