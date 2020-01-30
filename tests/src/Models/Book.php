@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
  * @package Gecche\AclTest\Tests\Models
  *
  */
-class Code extends Model
+class Book extends Model
 {
 
     /**
@@ -16,7 +16,7 @@ class Code extends Model
      *
      * @var string
      */
-    protected $table = 'codes';
+    protected $table = 'books';
 
     /**
      * Indicates if the model should be timestamped.
@@ -25,6 +25,12 @@ class Code extends Model
      */
     public $timestamps = false;
 
-    public $fillable = ['code','description'];
+    public $guarded = ['id'];
+
+    public function author() {
+
+        return $this->belongsTo(Author::class, null, null, null);
+
+    }
 
 }

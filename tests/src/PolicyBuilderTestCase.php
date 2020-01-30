@@ -8,13 +8,13 @@
 
 namespace Gecche\PolicyBuilder\Tests;
 
-use App\Providers\AuthServiceProvider;
+use Gecche\PolicyBuilder\Facades\PolicyBuilder;
+use Gecche\PolicyBuilder\Tests\Models\Author;
+use Gecche\PolicyBuilder\Tests\Models\Book;
 use Gecche\PolicyBuilder\Tests\Models\User;
 use Gecche\PolicyBuilder\PolicyBuilderServiceProvider as ServiceProvider;
-use Gecche\PolicyBuilder\Tests\Models\Code;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
-use Gecche\PolicyBuilder\Facades\PolicyBuilder;
 
 class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
 {
@@ -46,24 +46,75 @@ class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
 
         factory(User::class, 10)->create();
 
-        Code::create([
-            'code' => '001',
-            'description' => 'test1',
+        Author::create([
+            'name' => 'Dante',
+            'surname' => 'Alighieri',
+            'nation' => 'IT',
+            'birthdate' => '1265-05-21',
         ]);
 
-        Code::create([
-            'code' => '010',
-            'description' => null,
+        Author::create([
+            'name' => 'Joanne Kathleen',
+            'surname' => 'Rowling',
+            'nation' => 'UK',
+            'birthdate' => '1965-07-31',
         ]);
 
-        Code::create([
-            'code' => '002',
-            'description' => null,
+        Author::create([
+            'name' => 'Stephen',
+            'surname' => 'King',
+            'nation' => 'US',
+            'birthdate' => '1947-09-21',
         ]);
 
-        Code::create([
-            'code' => '012',
-            'description' => 'test2',
+        Author::create([
+            'name' => 'Ken',
+            'surname' => 'Follett',
+            'nation' => 'UK',
+            'birthdate' => '1949-06-05',
+        ]);
+
+
+        Book::create([
+            'title' => 'La divina commedia',
+            'language' => 'IT',
+            'author_id' => 1,
+        ]);
+
+        Book::create([
+            'title' => 'Fall of giants',
+            'language' => 'EN',
+            'author_id' => 4,
+        ]);
+
+        Book::create([
+            'title' => 'The Pillars of the Earth',
+            'language' => 'EN',
+            'author_id' => 4,
+        ]);
+
+        Book::create([
+            'title' => 'Misery',
+            'language' => 'EN',
+            'author_id' => 3,
+        ]);
+
+        Book::create([
+            'title' => 'Harry Potter and the Philosopher\'s Stone',
+            'language' => 'EN',
+            'author_id' => 2,
+        ]);
+
+        Book::create([
+            'title' => 'Harry Potter and the Chamber of Secrets',
+            'language' => 'EN',
+            'author_id' => 2,
+        ]);
+
+        Book::create([
+            'title' => 'Harry Potter adn the Prisoner fo Azkaban',
+            'language' => 'EN',
+            'author_id' => 2,
         ]);
     }
 
@@ -100,7 +151,7 @@ class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
         return [
             ServiceProvider::class,
             TestServiceProvider::class,
-            \Gecche\PolicyBuilder\Tests\AuthServiceProvider::class
+            AuthServiceProvider::class
         ];
     }
 
@@ -120,286 +171,243 @@ class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
 
 
     /*
-     * Test authentication with user 1
+     * In the first 3 tests, we check the PolicyBuilder@beforeAcl method when it returns a Builder.
+     * See the logic in \Gecche\PolicyBuilder\Tests\AuthServiceProvider
+     *
      */
-    public function testAuthUser1()
+
+
+    /*
+     * Test PolicyBuilder's beforeAcl method with user 1
+     */
+    public function testBeforeAclPolicyBuilderUser1()
     {
 
 
+        /*
+         * Login with user 1
+         */
         $user = Auth::loginUsingId(1);
 
         $this->assertAuthenticatedAs($user);
 
-        $codes = Code::acl()->get()->toArray();
+        /*
+         * We expect the full list of Authors and Books
+         */
+        $authors = Author::acl()->get()->toArray();
+        $this->assertEquals(count($authors), 4);
 
-
-        $this->assertEquals(count($codes), 4);
+        $books = Book::acl()->get()->toArray();
+        $this->assertEquals(count($books), 7);
     }
 
     /*
-     * Test authentication with user 2
+     * Test PolicyBuilder's beforeAcl method with guest user
      */
-    public function testAuthUser2()
+    public function testBeforeAclPolicyBuilderGuest()
     {
+        /*
+         * No login
+         */
 
+        /*
+         * We expect the empty list of Authors and Books in "editing" context
+         */
+        $authors = Author::acl(null,'editing')->get()->toArray();
+        $this->assertEquals($authors, []);
 
+        $books = Book::acl(null,'editing')->get()->toArray();
+        $this->assertEquals($books, []);
+    }
+
+    /*
+     * Test PolicyBuilder's beforeAcl method with guest user
+     */
+    public function testBeforeAclPolicyBuilderUser2()
+    {
+        /*
+         * Login with user 2
+         */
         $user = Auth::loginUsingId(2);
 
         $this->assertAuthenticatedAs($user);
 
-        $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
-
-        $this->assertEquals([1 => '001', 3 => '002'], $codes);
-
-    }
-
-    /*
-    * Test authentication with user 3
-    */
-    public function testAuthUser3()
-    {
-
-
-        $user = Auth::loginUsingId(3);
-
-        $this->assertAuthenticatedAs($user);
-
-        $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
-
-        $this->assertEquals([2 => '010', 3 => '002'], $codes);
+        /*
+         * We expect the full list of Books
+         */
+        $books = Book::acl()->get()->toArray();
+        $this->assertEquals(count($books), 7);
 
     }
 
+
     /*
-     * Test authentication with user 4
+     * From now on, the PolicyBuilder@beforeAcl returns null and so the PolicyBuilder
+     * should inspect the models' policies
      */
-    public function testAuthUser4()
+
+    /*
+     * Test Author's beforeAcl method with guest user
+     */
+    public function testBeforeAclAuthorPolicyGuest()
     {
+        /*
+         * No login
+         */
 
-
-        $user = Auth::loginUsingId(4);
-
-        $this->assertAuthenticatedAs($user);
-
-        $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
-
-        $this->assertEquals([1 => '001'], $codes);
+        /*
+         * We expect the empty list of Authors
+         */
+        $authors = Author::acl()->get()->toArray();
+        $this->assertEquals($authors, []);
 
     }
 
     /*
-     * Test authentication with user 4
+     * Test Author's policy with user 2
      */
-    public function testAuthUser5()
+    public function testAuthorPolicyUser2()
     {
-
-
-        $user = Auth::loginUsingId(5);
-
-        $this->assertAuthenticatedAs($user);
-
-        $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
-
-        $this->assertEquals(count($codes), 4);
-
-//        $this->assertEquals([1 => '001'], $codes);
-
-    }
-
-
-    /*
-     * Test authentication with user 1 (list type admin)
-     */
-    public function testCodeAdminListAuthUser1()
-    {
-
-
-        $user = Auth::loginUsingId(1);
-
-        $this->assertAuthenticatedAs($user);
-
-        $codes = Code::acl(null,'admin')->get()->pluck('code', 'id')->toArray();
-
-        $this->assertEquals(count($codes), 4);
-
-//        $this->assertEquals([1 => '001'], $codes);
-
-    }
-
-    /*
-     * Test authentication with user 1 (list type admin)
-     */
-    public function testCodeAdminListAuthUser2And3()
-    {
-
-
+        /*
+         * Login with user 2
+         */
         $user = Auth::loginUsingId(2);
 
         $this->assertAuthenticatedAs($user);
 
-        $codes = Code::acl(null,'admin')->get()->pluck('code', 'id')->toArray();
 
-        $this->assertEquals([1 => '001'], $codes);
+        /*
+         * We expect the full list of Authors in standard context
+         */
+        $authors = Author::acl()->get()->toArray();
+        $this->assertEquals(count($authors), 4);
 
-        $user = Auth::loginUsingId(3);
+        /*
+         * We expect only Dante Alighieri in editing context
+         */
+        $authors = Author::acl(null,'editing')->get()->pluck('surname', 'id')->toArray();
 
-        $this->assertAuthenticatedAs($user);
-
-        $codes = Code::acl(null,'admin')->get()->pluck('code', 'id')->toArray();
-
-        $this->assertEquals([1 => '001'], $codes);
-
-    }
-
-
-    /*
- * Test authentication with user 4
- */
-    public function testCodeVerypublicListAuthUser1And4()
-    {
-
-
-        $user = Auth::loginUsingId(1);
-
-        $this->assertAuthenticatedAs($user);
-
-        $codes = Code::acl(null,'verypublic')->get()->pluck('code', 'id')->toArray();
-
-        $this->assertEquals(count($codes), 4);
-
-        $user = Auth::loginUsingId(4);
-
-        $this->assertAuthenticatedAs($user);
-
-        $codes = Code::acl(null,'verypublic')->get()->pluck('code', 'id')->toArray();
-
-        $this->assertEquals(count($codes), 4);
-
+        $this->assertEquals([1 => 'Alighieri'], $authors);
     }
 
     /*
- * Test authentication with user 4
- */
-    public function testAuthUser5all()
+     * Test Book's policy with guest user
+     */
+    public function testBookPolicyGuest()
     {
 
+        /*
+         * No Login
+         */
 
-        $user = Auth::loginUsingId(5);
+        /*
+         * We expect the full list of Books
+         */
+        $books = Book::acl()->get()->pluck('title', 'id')->toArray();
 
-        $this->assertAuthenticatedAs($user);
+            $arrayExpected = [
+                1 => 'La divina commedia',
+                2 => 'Fall of giants',
+                3 => 'The Pillars of the Earth',
+            ];
 
-        $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
+            $this->assertEquals($arrayExpected, $books);
+    }
 
-        $this->assertEquals(count($codes), 4);
+    /*
+     * Test Book's policy with guest user
+     */
+    public function testForcingUser()
+    {
 
-        PolicyBuilder::setAllBuilder(function ($builder) {
-            return $builder->where('id', 4);
+        /*
+         * No Login, as the previous test, but now we force to get the list for user 2
+         */
+
+        /*
+         * We expect the full list of Books
+         */
+        $userForAcl = User::find(2);
+        $books = Book::acl($userForAcl)->get()->pluck('title', 'id')->toArray();
+
+        $this->assertEquals(count($books), 7);
+
+
+    }
+
+    /*
+     * In this test we change the standard PolicyBuilder@all method
+     * by setting that in the case of Authors, the author 1 is not returned
+     */
+    public function testCustomAllBuilderMethod()
+    {
+
+        $userforAcl = User::find(1);
+        /*
+         * We expect the full list of Authors
+         */
+        $authors = Author::acl($userforAcl)->get()->toArray();
+        $this->assertEquals(count($authors), 4);
+
+
+        /*
+         * We set a new logic for PolicyBuilder@all
+         */
+        PolicyBuilder::setAllBuilder(function ($builder,$modelClassName = null) {
+           if ($modelClassName == Author::class) {
+               return $builder->where('id','<>',1);
+           }
+           return $builder;
         });
 
-        $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
-
-        $this->assertEquals([4 => '012'], $codes);
+        /*
+         * We expect now the full list of Authors except the author 1
+         */
+        $authors = Author::acl($userforAcl)->get()->pluck('id','id')->toArray();
+        $this->assertEquals(array_values($authors), [2,3,4]);
 
     }
 
     /*
-     * Test guest user
+     * In this test we change the standard PolicyBuilder@none method
+     * by setting that in the case of Books, italian books are always returned
      */
-    public function testGuestUser()
+    public function testCustomNoneBuilderMethod()
     {
 
+        /*
+         * No login
+         */
 
-        $this->assertGuest();
-
-        $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
-
-        $this->assertEquals(count($codes), 0);
-
-    }
-
-
-    /*
-     * Test guest with another aclNone function
-     */
-
-    public function testGuestUserAclGuest()
-    {
+        /*
+         * We expect the empty list of Books
+         */
+        $books = Book::acl(null,'editing')->get()->toArray();
+        $this->assertEquals(count($books), 0);
 
 
-        $this->assertGuest();
-
-        $codes = Code::acl()->get()->pluck('code', 'id')->toArray();
-
-        $this->assertEquals(count($codes), 0);
-        
-    }
-
-
-    /*
-     * Test user 1 and 5 with User model (no policy defined)
-     */
-
-    public function testAuthUsers1UserModel()
-    {
-
-        $user = Auth::loginUsingId(1);
-
-        $this->assertAuthenticatedAs($user);
-
-        $users = User::acl()->get()->pluck('name', 'id')->toArray();
-
-        $this->assertEquals([], $users);
-
-        PolicyBuilder::setNoneBuilder(function ($builder) {
-            return $builder->where('id', 4);
+        /*
+         * We set a new logic for PolicyBuilder@all
+         */
+        PolicyBuilder::setNoneBuilder(function ($builder,$modelClassName = null) {
+            if ($modelClassName == Book::class) {
+                return $builder->where('language','IT');
+            }
+            return $builder->whereRaw(0);
         });
 
-        $users = User::acl()->get()->pluck('name', 'id')->toArray();
-        $this->assertEquals(count($users), 1);
+        /*
+         * We expect now the full list of Authors except the author 1
+         */
+        $books = Book::acl(null,'editing')->get()->pluck('title', 'id')->toArray();
+
+        $arrayExpected = [
+            1 => 'La divina commedia',
+        ];
+
+        $this->assertEquals($arrayExpected, $books);
 
     }
 
-    public function testAuthUsers1UserModelAclNone()
-    {
-
-        $user = Auth::loginUsingId(1);
-
-        $this->assertAuthenticatedAs($user);
-
-        $users = User::acl()->get()->pluck('name', 'id')->toArray();
-
-        $this->assertEquals([], $users);
-
-
-
-    }
-
-    public function testAuthUsers5UserModel()
-    {
-
-        $user = Auth::loginUsingId(5);
-
-        $this->assertAuthenticatedAs($user);
-
-        $users = User::acl()->get()->pluck('name', 'id')->toArray();
-
-        $this->assertEquals(count($users),10);
-
-    }
-
-    /*
-     * Test guest with User model (no policy defined)
-     */
-
-    public function testGuestUserModel()
-    {
-
-
-        $this->assertGuest();
-
-        $users = User::acl()->get()->pluck('name', 'id')->toArray();
-
-        $this->assertEquals([], $users);
-
-    }
+    
 }

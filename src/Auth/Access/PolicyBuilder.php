@@ -188,25 +188,23 @@ class PolicyBuilder implements PolicyBuilderContract
      * @param Builder $builder
      * @return mixed
      */
-    protected function buildBuilderMethod($type,$builder) {
+    protected function buildBuilderMethod($type,$builder,$modelClassName = null) {
 
-        if (!in_array($type,['all','none','guest'])) {
-            throw new InvalidArgumentException('acl method type not allowed: it must be "all", "none" or "guest"');
+        if (!in_array($type,['all','none'])) {
+            throw new InvalidArgumentException('acl method type not allowed: it must be wither "all" or "none"');
         }
 
         $aclType = Arr::get($this->builderMethods,$type);
 
         if (!is_null($aclType)) {
             $aclTypeFunc = $aclType;
-            return $aclTypeFunc($builder);
+            return $aclTypeFunc($builder,$modelClassName);
         }
 
         switch ($type) {
             case 'all':
                 return $builder;
             case 'none':
-                return $builder->whereRaw(0);
-            case 'guest':
                 return $builder->whereRaw(0);
             default:
                 return $builder->whereRaw(0);
@@ -315,12 +313,12 @@ class PolicyBuilder implements PolicyBuilderContract
     }
 
 
-    public function all($builder) {
-        return $this->buildBuilderMethod('all', $builder);
+    public function all($builder,$modelClassName = null) {
+        return $this->buildBuilderMethod('all', $builder, $modelClassName);
     }
 
-    public function none($builder) {
-        return $this->buildBuilderMethod('none', $builder);
+    public function none($builder,$modelClassName = null) {
+        return $this->buildBuilderMethod('none', $builder, $modelClassName);
     }
 
 }
