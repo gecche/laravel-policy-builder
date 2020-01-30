@@ -35,7 +35,7 @@ Add gecche/laravel-policy-builder as a requirement to composer.json:
 
 This package makes use of the discovery feature.
 
-### Simple usage
+### Basic usage
 
 #### Define the business logic of building allowed lists of models in the policies
 Let us suppose to have an `Author` Model class and a standard `AuthorPolicy` class for defining ability methods as 
