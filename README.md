@@ -6,12 +6,11 @@
 A simple and convenient way to build allowed list of Eloquent models according to policies.
 
 ## Description
-Laravel's Gate and Policies are very useful tools if you want to check if a user is allowed to perform an action like 
- viewing, creating or editing a resource. 
-  However, in many apps you have to create lists of resources which are allowed to be accessed by an user 
-  accordingly to policies (Eloquent Access Control Lists).
-  This package adds a method to an Eloquent Builder for creating Eloquent ACL, storing the business logic 
-  directly in the policies.
+  In many apps you use Laravel's Policies for checking if an user is allowed to handle a resource. 
+  Usually, in those apps, you also have to get lists of allowed resources accordingly to policies.
+  
+  By using this package you store the business logic of filtering lists of resources directly in the 
+  policies and you get such lists by simply calling the method `acl` when using an Eloquent Builder.
 
 ## Documentation
 
@@ -37,68 +36,70 @@ This package makes use of the discovery feature.
 
 ### Simple usage
 
-#### Define the business logic of Eloquent ACL in the policies
-Let us suppose to have a `Code` Model class with `id`, `code` and `description` fields together with a standard 
-`CodePolicy` class in which we can define ability methods as usual.
+#### Define the business logic of building allowed lists of models in the policies
+Let us suppose to have an `Author` Model class and a standard `AuthorPolicy` class for defining ability methods as 
+usual.
 
-Simply add in the `CodePolicy` class, the business logic for allowed lists of Code models in the `acl` method.
+Simply add directly in the `AuthorPolicy` class the business logic for filtering lists of Author. E.g.:
 
 ```php
-class CodePolicy
+class AuthorPolicy
 {
     use HandlesAuthorization;
 
     /**
     /*
+     * - All authors are allowed to users 1 and 2
+     * - Only italian authors are allowed to users 3 and 4
+     * - Only non-italian authors are allowed to other users
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable $user
-     * @param  \Illuminate\Database\Eloquent\Builder $builder
+     * @param   \Illuminate\Contracts\Auth\Authenticatable|null $user
+     * @param  Builder $builder
      * @return mixed
      */
     public function acl($user, $builder)
     {
-        if (is_null($user)) {
-            return $builder->where('id',-1);
-        }
-        
+    
         switch ($user->getKey()) {
             case 1:
-                return $builder;
             case 2:
-                return $builder->where('code','like','00%');
+                return $builder;
             case 3:
-                return $builder->whereNull('description');
+            case 4:
+                return $builder->where('nation','IT');
             default:
-                return $builder->where('id',-1);
+                return $builder->where('nation','<>','IT');
 
         }
 
+
     }
-}
 ```
 
-In this example, User 1 has access to all the codes, User 2 has access to all the codes with `code` starting with `00`, 
-User 3 has access to all codes with a null `description` and finally both the guest user (null) and all the others 
-registered users have no access to any code.
 
 #### Get the allowed list for an user
 
-Now, to get the Access Control Lists for the `Code` Model, simply do:
+Now, to get the allowed list of authors for the currently authenticated user, simply do:
 
 ```php
-    Code::acl()->get();
+    Author::acl()->get();
 ```
 
-The returned list is filtered for the currently authenticated user.
-
-To get the lists for, namely, user 2, simply do:
+If you want the list for the user 3, simply do:
 
 ```php
-    $userForAcl = User::find(2);
+    $userForAcl = User::find(3);
     Code::acl($userForAcl)->get();
 ```
 
-Now the lists is built with respect to the `Code` models allowed to user 2.
+Now the lists returns only italian authors.
+
+
+### Beyond the basics
+
+The package provides the `PolicyBuilderServiceProvider` which wraps the standard Laravel's Gate class 
+and makes available methods for handling Eloquent Builders and returning filtered lists of allowed models.
+Also the PolicyBuilder facade is provided. 
 
 #### Changing the "context" of the list
 
@@ -119,13 +120,6 @@ Usually, given a model and an user, the allowed list of models is built always i
 ```
 
 In the Code policy you have to define accordingly the  `aclEditing` method as done before.
-
-
-### Beyond the basics
-
-The package provides the `PolicyBuilderServiceProvider` which wraps the standard Laravel's Gate class 
-and makes available methods for handling Eloquent Builders and returning filtered lists of allowed models.
-Also the PolicyBuilder facade is provided. 
 
 #### Basic default builder methods: `all` and `none` 
 

@@ -28,7 +28,7 @@ class AuthorPolicy
      * - Only italian authors are allowed to users 3 and 4
      * - Only non-italian authors are allowed to other users
      *
-     * @param   \Illuminate\Contracts\Auth\Authenticatable $user
+     * @param   \Illuminate\Contracts\Auth\Authenticatable|null $user
      * @param  Builder $builder
      * @return mixed
      */
@@ -53,7 +53,7 @@ class AuthorPolicy
      * In "editing" context
      * - only user 2 can access to users, but only those born before 1900
      *
-     * @param   \Illuminate\Contracts\Auth\Authenticatable $user
+     * @param   \Illuminate\Contracts\Auth\Authenticatable|null $user
      * @param  Builder $builder
      * @return mixed
      */

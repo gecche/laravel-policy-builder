@@ -409,5 +409,5 @@ class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
 
     }
 
-    
+
 }
