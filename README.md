@@ -29,7 +29,7 @@ Add gecche/laravel-policy-builder as a requirement to composer.json:
 ```javascript
 {
     "require": {
-        "gecche/laravel-policy-builder": "1.2.*"
+        "gecche/laravel-policy-builder": "1.3.*"
     }
 }
 ```
@@ -50,7 +50,7 @@ class AuthorPolicy
     use HandlesAuthorization;
 
     /**
-    /*
+     *
      * - All authors are allowed to users 1 and 2
      * - Only italian authors are allowed to users 3 and 4
      * - Only non-italian authors are allowed to other users
@@ -138,7 +138,7 @@ class AuthorPolicy
     use HandlesAuthorization;
 
     /**
-    /*
+     *
      * - All authors are allowed to users 1 and 2
      * - Only italian authors are allowed to users 3 and 4
      * - Only non-italian authors are allowed to other users
