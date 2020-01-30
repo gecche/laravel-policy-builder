@@ -7,7 +7,7 @@ use Illuminate\Database\Schema\Blueprint;
 /**
  * Class Posts
  */
-class Codes extends Migration
+class CreateBooksTable extends Migration
 {
 
     /**
@@ -17,10 +17,11 @@ class Codes extends Migration
      */
     public function up()
     {
-        Schema::create('codes', function (Blueprint $table) {
+        Schema::create('books', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('code');
-            $table->string('description')->nullable();
+            $table->string('title');
+            $table->string('language');
+            $table->integer('author_id');
         });
     }
 
@@ -31,7 +32,7 @@ class Codes extends Migration
      */
     public function down()
     {
-        Schema::drop('codes');
+        Schema::drop('books');
     }
 
 }

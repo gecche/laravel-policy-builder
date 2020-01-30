@@ -1,9 +1,10 @@
 <?php namespace Gecche\PolicyBuilder\Tests;
 
-use Gecche\PolicyBuilder\Tests\Policies\CodePolicy;
+use Gecche\PolicyBuilder\Tests\Models\Author;
+use Gecche\PolicyBuilder\Tests\Models\Book;
+use Gecche\PolicyBuilder\Tests\Policies\AuthorPolicy;
+use Gecche\PolicyBuilder\Tests\Policies\BookPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
-
-use Gecche\PolicyBuilder\Tests\Models\Code;
 
 use Gecche\PolicyBuilder\Facades\PolicyBuilder;
 
@@ -16,7 +17,8 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         'App\Model' => 'App\Policies\ModelPolicy',
-        Code::class => CodePolicy::class,
+        Author::class => AuthorPolicy::class,
+        Book::class => BookPolicy::class,
     ];
 
     /**
@@ -28,10 +30,26 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        // Implicitly grant "Admin" role all permissions
-        // This works in the app by using gate-related functions like auth()->user->can() and @can()
+        /*
+         * - It returns the empty list for guest user in "editing" context
+         * - For user 1 (superuser) it returns the full list of models for any model and context
+         * - For all the other registerd users, it returns the full list of models for Book
+         */
         PolicyBuilder::beforeAcl(function ($user, $modelClassName, $context, $builder) {
-            return ($user && $user->getKey() == 5) ? PolicyBuilder::all($builder) : null;
+
+            if ($context == 'editing' && !$user) {
+                return PolicyBuilder::none($builder,$modelClassName);
+            }
+
+            if (!$user) {
+                return;
+            }
+
+            if ($user->getKey() == 1 || $modelClassName == Book::class) {
+                return PolicyBuilder::all($builder,$modelClassName);
+            }
+
+            return;
         });
 
 
