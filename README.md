@@ -6,12 +6,11 @@
 A simple and convenient way to build allowed list of Eloquent models according to policies.
 
 ## Description
-Laravel's Gate and Policies are very useful tools if you want to check if a user is allowed to perform an action like 
- viewing, creating or editing a resource. 
-  However, in many apps you have to create lists of resources which are allowed to be accessed by an user 
-  accordingly to policies (Eloquent Access Control Lists).
-  This package adds a method to an Eloquent Builder for creating Eloquent ACL, storing the business logic 
-  directly in the policies.
+  In many apps you use Laravel's Policies for checking if an user is allowed to handle a resource. 
+  Usually, in those apps, you also have to get lists of allowed resources accordingly to policies.
+  
+  By using this package you store the business logic of filtering lists of resources directly in the 
+  policies and you get such lists by simply calling the method `acl` when using an Eloquent Builder.
 
 ## Documentation
 
@@ -38,173 +37,233 @@ This package makes use of the discovery feature.
 
 ### Simple usage
 
-#### Define the business logic of Eloquent ACL in the policies
-Let us suppose to have a `Code` Model class with `id`, `code` and `description` fields together with a standard 
-`CodePolicy` class in which we can define ability methods as usual.
+#### Define the business logic of building allowed lists of models in the policies
+Let us suppose to have an `Author` Model class and a standard `AuthorPolicy` class for defining ability methods as 
+usual.
 
-Simply add in the `CodePolicy` class, the business logic for allowed lists of Code models in the `acl` method.
+Simply add directly in the `AuthorPolicy` class the business logic for filtering lists of Author. E.g.:
 
 ```php
-class CodePolicy
+class AuthorPolicy
 {
     use HandlesAuthorization;
 
     /**
     /*
+     * - All authors are allowed to users 1 and 2
+     * - Only italian authors are allowed to users 3 and 4
+     * - Only non-italian authors are allowed to other users
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable $user
-     * @param  \Illuminate\Database\Eloquent\Builder $builder
+     * @param   \Illuminate\Contracts\Auth\Authenticatable|null $user
+     * @param  Builder $builder
      * @return mixed
      */
     public function acl($user, $builder)
     {
-        if (is_null($user)) {
-            return $builder->where('id',-1);
-        }
-        
+    
         switch ($user->getKey()) {
             case 1:
-                return $builder;
             case 2:
-                return $builder->where('code','like','00%');
+                return $builder;
             case 3:
-                return $builder->whereNull('description');
+            case 4:
+                return $builder->where('nation','IT');
             default:
-                return $builder->where('id',-1);
+                return $builder->where('nation','<>','IT');
 
         }
 
+
     }
-}
 ```
 
-In this example, User 1 has access to all the codes, User 2 has access to all the codes with `code` starting with `00`, 
-User 3 has access to all codes with a null `description` and finally both the guest user (null) and all the others 
-registered users have no access to any code.
 
-#### Get the allowed list for an user
+#### Get the allowed list of models for an user
 
-Now, to get the Access Control Lists for the `Code` Model, simply do:
+Now, to get the allowed list of authors for the currently authenticated user, simply do:
 
 ```php
-    Code::acl()->get();
+    Author::acl()->get();
 ```
 
-The returned list is filtered for the currently authenticated user.
-
-To get the lists for, namely, user 2, simply do:
+If you want the list for the user 3, simply do:
 
 ```php
-    $userForAcl = User::find(2);
+    $userForAcl = User::find(3);
     Code::acl($userForAcl)->get();
 ```
 
-Now the lists is built with respect to the `Code` models allowed to user 2.
+Now the lists returns only italian authors.
 
-#### Changing the "context" of the list
+#### Default list
 
-Usually, given a model and an user, the allowed list of models is built always in the same way within an app.
- But let us suppose we want a second list of models for a given user if the context changes. For example, 
- a standard list of models which an user can access and a second list of models which the same user 
-   can access with editing privileges.
-   
-   In that case, you can pass the "context" as the second argument in the builder method as follows:
-   
+Let us consider another `Book` model for which either the `acl` method has not been defined in 
+its `BookPolicy` or there is no `BookPolicy` at all.
+
+If we do:
 
 ```php
-    //returning the 'editing' list for the authenticated user 
-    Code::acl(null,'editing')->get();
-    //or returning the 'editing' list for user 2 
-    $userForAcl = User::find(2);
-    Code::acl($userForAcl,'editing')->get();
+    Book::acl()->get();
 ```
 
-In the Code policy you have to define accordingly the  `aclEditing` method as done before.
+we get the empty list of models for any user.
 
 
 ### Beyond the basics
 
-The package provides the `PolicyBuilderServiceProvider` which wraps the standard Laravel's Gate class 
-and makes available methods for handling Eloquent Builders and returning filtered lists of allowed models.
-Also the PolicyBuilder facade is provided. 
+Once installed, other than the `acl` Eloquent Builder macro, 
+the package provides the `PolicyBuilderServiceProvider` (together with the 
+`PolicyBuilder` facade) which performs the underlying machinery for linking 
+the Eloquent Builder with the policies 
+(by wrapping the Laravel's `Gate` provider) and it offers some useful methods.
 
 #### Basic default builder methods: `all` and `none` 
 
-The PolicyBuilder has two public methods, namely `all` and `none` which basically, given an Eloquent Builder, 
-add to it the filters for building an acl list when either all or none of the models are allowed.
+The PolicyBuilder has two public methods, namely `all` and `none` which basically, 
+given an Eloquent Builder adn (optionally) the model class name, return respectively 
+the list of all available models (no filters at all) and the empty list.
 
-Basically, the `all` method returns the builder itself with no added filters while the `none` method adds a filter for 
-returning an empty collection of models.
+The return of above methods can be customized by using the `setAllBuilder` and `setNoneBuilder` methods.
 
-The return of above methods can be customized by using 
-the `setAllBuilder` and `setNoneBuilder` methods.
-
-In the following example we change the previous `CodePolicy` class by using default builder methods and leaving 
-the semantic as before.
+In the following example we change the previous `AuthorPolicy` class with the  
+PolicyBuilder's `all` method, but we leave the same semantics as before.
 
 ```php
+use Gecche\PolicyBuilder\Facades\PolicyBuilder;
+use App\Models\Author;
 
-use Illuminate\Support\Facades\Gate;
-
-class CodePolicy
+class AuthorPolicy
 {
     use HandlesAuthorization;
 
     /**
     /*
+     * - All authors are allowed to users 1 and 2
+     * - Only italian authors are allowed to users 3 and 4
+     * - Only non-italian authors are allowed to other users
      *
-     * @param  \Illuminate\Contracts\Auth\Authenticatable $user
-     * @param  \Illuminate\Database\Eloquent\Builder $builder
+     * @param   \Illuminate\Contracts\Auth\Authenticatable|null $user
+     * @param  Builder $builder
      * @return mixed
      */
     public function acl($user, $builder)
     {
-        if (is_null($user)) {
-            return PolicyBuilder::none($builder);
-        }
-        
+    
         switch ($user->getKey()) {
             case 1:
-                return PolicyBuilder::all($builder);
             case 2:
-                return $builder->where('code','like','00%');
+                return PolicyBuilder::all($builder,Author::class);
             case 3:
-                return $builder->whereNull('description');
+            case 4:
+                return $builder->where('nation','IT');
             default:
-                return PolicyBuilder::none($builder);
+                return $builder->where('nation','<>','IT');
 
         }
-
     }
-}
 ```
-
-#### `beforeAcl` Gate method
- 
-Laravel's Gate has a `before` method for registering "before" callbacks to be processed 
- before ability or policy methods. 
- In the same way the PolicyBuilder has a `beforeAcl` method for registering
-  "beforeAcl" callbacks.
-  Whereas the "before" callbacks must return either a boolean value or null, the "beforeAcl" callbacks must 
-  return either an Eloquent Builder or null.
     
-#### `beforeAcl` Policy method
-
-Like the above `beforeAcl` method, also into single policies a `beforeAcl` method could be defined.
-    
-#### Default return value for `acl` builder method
- 
-What happens if either no Policy class has been defined for a model or the Policy class has not the `acl` method? 
-The `acl` builder method, simply acts as the `none` builder method unless some "beforeAcl" callback applies.
- 
-For example, if no `CodePolicy` class has been defined and no "beforeAcl" callbacks have been registered, 
-the following code returns an empty collection of models:
+As before for both user 1 and 2 the full list of authors is returned if we do:
 
 ```php
-    Code::acl()->get();
+    Author::acl()->get();
 ```
+
+However we can set globally a different semantics for the PolicyBuilder's `all` method, e.g.: 
+
+```php
+PolicyBuilder::setAllBuilder(function ($builder,$modelClassName = null) {
+    if ($modelClassName == Author::class) {
+        return $builder->where('id','<>',1);
+    }
+    return $builder;
+});
+```
+
+In the above example when the `all` method is called the list of authors lacks 
+the author with id 1.
+
+The same can be done with the PolicyBuilder's `none` method.
+
+
+#### Changing the "context" 
+
+Usually, an user either can access or not a certain model. 
+But there are some cases in which, under certain "context", we need to built 
+a list of allowed models which is different than the standard one.
+
+For example, an user can view the whole list of `Author` models in the library, 
+but it cannot edit all of them. 
+So we want to build also the list of books which the user can edit 
+and we are changing to the `editing` "context" with a different business 
+logic for building the list.
+   
+In that case, simply pass the "context" to the builder:
+   
+```php
+    //returning the 'editing' list for the authenticated user 
+    Author::acl(null,'editing')->get();
+    //or returning the 'editing' list for user 2 
+    $userForAcl = User::find(2);
+    Author::acl($userForAcl,'editing')->get();
+```
+
+In the AuthorPolicy you have to define accordingly the  `aclEditing` method as done before for the `acl` one.
+
+
+#### `beforeAcl` PolicyBuilder and Policy methods
+ 
+Like the Laravel's Gate `before` method, PolicyBuilder has a `beforeAcl` method for registering
+  "beforeAcl" callbacks. If a registered callback returns an Eloquent Builder, further elaboration 
+  is not needed and thus no policy is needed at all. E.g.:
   
+```php
+/*
+ * - For user 1 (superuser) it returns the full list of models for any model and context
+ * - For all the other registerd users, it returns the full list of models for Book
+ */
+PolicyBuilder::beforeAcl(function ($user, $modelClassName, $context, $builder) {
+
+    if (!$user) {
+        return;
+    }
+
+    if ($user->getKey() == 1 || $modelClassName == Book::class) {
+        return PolicyBuilder::all($builder,$modelClassName);
+    }
+
+    return;
+});  
+```
+
+A very similar `beforeAcl` method can also be placed into a single policy and 
+it will be handled by the `PolicyBuilderServiceProvider` before elaborating 
+any other method in the policy. 
+
+```php
+use Gecche\PolicyBuilder\Facades\PolicyBuilder;
+use App\Models\Author;
+
+class AuthorPolicy
+{
+    use HandlesAuthorization;
+
+
+    public function beforeAcl($user, $context, $builder) {
+
+        if (is_null($user)) {
+            return PolicyBuilder::none($builder,Author::class);
+        }
+
+        return null;
+
+    }
+
+    ...
     
+```php
+
+In the above example, the guest user has no access at all to the authors.
 
 
 
