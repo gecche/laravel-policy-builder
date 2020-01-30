@@ -38,11 +38,18 @@ class PolicyBuilderServiceProvider extends ServiceProvider
     public function boot()
     {
 
+        /*
+         * The macro builder for adding policy filters.
+         * If the $user is false, it acts as for guest user.
+         * If the $user is null it tries to instantiate the currently authenticated user
+         */
         Builder::macro('acl', function ($user = null,  $context = null, $arguments = []) {
 
             $model = $this->model;
 
-            if (is_null($user)) {
+            if ($user === false) {
+                $user = null;
+            } elseif (is_null($user)) {
                 $user = Auth::user();
             }
 
