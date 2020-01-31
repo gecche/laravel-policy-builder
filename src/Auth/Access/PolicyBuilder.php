@@ -98,6 +98,13 @@ class PolicyBuilder implements PolicyBuilderContract
      */
     public function setBuilderMethods($builderMethods)
     {
+        $builderMethodsTypes = array_keys($builderMethods);
+        foreach ($builderMethodsTypes as $type) {
+            if (!in_array($type,['all','none'])) {
+                throw new InvalidArgumentException('policy builder method type not allowed: it must be wither "all" or "none"');
+            }
+        }
+
         $this->builderMethods = $builderMethods;
     }
 
@@ -213,10 +220,6 @@ class PolicyBuilder implements PolicyBuilderContract
      */
     protected function buildBuilderMethod($type,$builder,$modelClassName = null) {
 
-        if (!in_array($type,['all','none'])) {
-            throw new InvalidArgumentException('policy builder method type not allowed: it must be wither "all" or "none"');
-        }
-
         $policyBuilderDefaultType = Arr::get($this->builderMethods,$type);
 
 
@@ -231,9 +234,6 @@ class PolicyBuilder implements PolicyBuilderContract
                 return $builder;
             case 'none':
                 //$builder is returned with a "false" constraint which should return an empty result for a query
-                return $builder->whereRaw(0);
-            default:
-                //Any other value acts as "none"
                 return $builder->whereRaw(0);
         }
     }
