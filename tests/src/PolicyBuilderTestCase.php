@@ -409,5 +409,132 @@ class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
 
     }
 
+    /*
+     * In this test we change both the standard PolicyBuilder@none and
+     * PolicyBuilder@all methods via the PolicyBuilder@setBuilderMethods method.
+     * The expected values are the same of the last two tests.
+     */
+    public function testSetBuilderMethodsMethod()
+    {
+
+        /*
+         * No login
+         */
+
+        $userforAcl = User::find(1);
+        /*
+         * We expect the full list of Authors
+         */
+        $authors = Author::acl($userforAcl)->get()->toArray();
+        $this->assertEquals(count($authors), 4);
+
+        /*
+         * We expect the empty list of Books
+         */
+        $books = Book::acl(null,'editing')->get()->toArray();
+        $this->assertEquals(count($books), 0);
+
+
+        /*
+         * We set a new logic for PolicyBuilder@all and PolicyBuilder@none
+         */
+        $builderMethodsArray = [
+          'all' =>  function ($builder,$modelClassName = null) {
+              if ($modelClassName == Author::class) {
+                  return $builder->where('id','<>',1);
+              }
+              return $builder;
+          },
+          'none' => function ($builder,$modelClassName = null) {
+              if ($modelClassName == Book::class) {
+                  return $builder->where('language','IT');
+              }
+              return $builder->whereRaw(0);
+          }
+        ];
+        PolicyBuilder::setBuilderMethods($builderMethodsArray);
+
+        /*
+         * We expect now the full list of Authors except the author 1
+         */
+        $authors = Author::acl($userforAcl)->get()->pluck('id','id')->toArray();
+        $this->assertEquals(array_values($authors), [2,3,4]);
+
+        /*
+         * We expect now the full list of Authors except the author 1
+         */
+        $books = Book::acl(null,'editing')->get()->pluck('title', 'id')->toArray();
+
+        $arrayExpected = [
+            1 => 'La divina commedia',
+        ];
+
+        $this->assertEquals($arrayExpected, $books);
+
+    }
+
+    /*
+     * In this test we call again the PolicyBuilder@setBuilderMethods method but passing an invalid $type
+     * (only 'all' and 'none' are accepted as builder methods).
+     */
+    public function testSetBuilderMethodsException()
+    {
+
+        $this->expectException(\InvalidArgumentException::class);
+        /*
+         * We set a new logic for PolicyBuilder@all and PolicyBuilder@none
+         */
+        $builderMethodsArray = [
+            'pippo' =>  function ($builder,$modelClassName = null) {
+                if ($modelClassName == Author::class) {
+                    return $builder->where('id','<>',1);
+                }
+                return $builder;
+            },
+            'none' => function ($builder,$modelClassName = null) {
+                if ($modelClassName == Book::class) {
+                    return $builder->where('language','IT');
+                }
+                return $builder->whereRaw(0);
+            }
+        ];
+        PolicyBuilder::setBuilderMethods($builderMethodsArray);
+
+
+    }
+
+
+    /*
+     * In this we test that for model without a policy, the user 1 still gets the
+     * full list of models due to the PolicyBuilder@beforeAcl method in AuthServiceProvider,
+     * while all the other users gets the empty list of models
+     */
+    public function testNoExistentUserPolicy()
+    {
+
+        /*
+         * We expect the full list of Users for user 1
+         */
+        $userForAcl = User::find(1);
+        $users = User::acl($userForAcl)->get()->toArray();
+
+        $this->assertEquals(count($users), 10);
+
+        /*
+         * We expect the empty list of Users for all toher users (including guest)
+         */
+        $userForAcl = User::find(2);
+        $users = User::acl($userForAcl)->get()->toArray();
+
+        $this->assertEquals($users, []);
+
+        /*
+         * Force the guest user for acl listing
+         */
+        $users = User::acl(false)->get()->toArray();
+
+        $this->assertEquals($users, []);
+    }
+
 
 }
