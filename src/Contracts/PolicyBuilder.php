@@ -10,39 +10,73 @@ interface PolicyBuilder
 {
 
     /**
-     * Register a callback to run before all Gate checks.
+     * Apply to $builder the "none" filters for getting an empty list of models
      *
-     * @param  callable  $callback
-     * @return $this
-     */
-
-    public function beforeAcl(callable $callback);
-
-    public function all($builder,$modelClassName = null);
-
-    public function none($builder,$modelClassName = null);
-
-    /**
      * @param Builder $builder
-     * @param  \Illuminate\Contracts\Auth\Authenticatable $user
+     * @param string|null $modelClassName
+     * @return mixed
      */
-    public function acl($modelClassName, $builder = null, $listType = null, $arguments = []);
-
+    public function none($builder, $modelClassName = null);
 
     /**
-     * @param array $aclMethods
+     * Apply to $builder the "all" filters for getting a list of all models
+     *
+     * @param Builder $builder
+     * @param string|null $modelClassName
+     * @return mixed
      */
-    public function setBuilderMethods($builderMethods);
+    public function all($builder, $modelClassName = null);
 
     /**
-     * @param \Closure|null $aclNone
+     *
+     * Method for setting the function to be called when PolicyBuilder@all method is called
+     *
+     * @param \Closure|null $allBuilder
+     */
+    public function setAllBuilder($allBuilder);
+
+    /**
+     * Method for setting the function to be called when PolicyBuilder@none method is called
+     *
+     * @param \Closure|null $noneBuilder
      */
     public function setNoneBuilder($noneBuilder);
 
     /**
-     * @param \Closure|null $aclAll
+     * Get a PolicyBuilder instance for the given user.
+     *
+     * @param  \Illuminate\Contracts\Auth\Authenticatable|mixed  $user
+     * @return static
      */
-    public function setAllBuilder($allBuilder);
+    public function forUser($user);
+
+    /**
+     *
+     * Find out the policy associated to the model $modelClassName and then
+     * applies its beforeAcl method (if any) to the $builder adn the given $context.
+     * If no return is obtained, the policy's acl method is executed and the instantiated
+     * Eloquent Builder is returned.
+     *
+     * @param string $modelClassName
+     * @param Builder|null $builder
+     * @param string|null $context
+     * @param array $arguments
+     * @return Builder
+     */
+    public function acl($modelClassName, $builder = null, $context = null, $arguments = []);
+
+    /**
+     * Register a callback to run before all Policybuilder checks.
+     *
+     * @param  callable  $callback
+     * @return \Gecche\PolicyBuilder\Auth\Access\PolicyBuilder
+     */
+    public function beforeAcl(callable $callback);
+
+    /**
+     * @param array $builderMethods
+     */
+    public function setBuilderMethods($builderMethods);
 
 
 }
