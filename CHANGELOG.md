@@ -9,4 +9,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 - Initial version for Laravel 5.5.
 
-[Unreleased]: https://github.com/gecche/laravel-multidomain/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/gecche/laravel-policy-builder/compare/v1.1.0...HEAD
