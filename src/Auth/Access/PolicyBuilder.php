@@ -66,7 +66,7 @@ class PolicyBuilder implements PolicyBuilderContract
     }
 
     /**
-     * Get a gate instance for the given user.
+     * Get a PolicyBuilder instance for the given user.
      *
      * @param  \Illuminate\Contracts\Auth\Authenticatable|mixed  $user
      * @return static
@@ -103,6 +103,8 @@ class PolicyBuilder implements PolicyBuilderContract
 
 
     /**
+     * Method for setting the function to be called when PolicyBuilder@none method is called
+     *
      * @param \Closure|null $noneBuilder
      */
     public function setNoneBuilder($noneBuilder)
@@ -111,6 +113,9 @@ class PolicyBuilder implements PolicyBuilderContract
     }
 
     /**
+     *
+     * Method for setting the function to be called when PolicyBuilder@all method is called
+     *
      * @param \Closure|null $allBuilder
      */
     public function setAllBuilder($allBuilder)
@@ -120,7 +125,7 @@ class PolicyBuilder implements PolicyBuilderContract
 
 
     /**
-     * Register a callback to run before all Gate checks.
+     * Register a callback to run before all Policybuilder checks.
      *
      * @param  callable  $callback
      * @return $this
@@ -132,8 +137,9 @@ class PolicyBuilder implements PolicyBuilderContract
         return $this;
     }
 
+
     /**
-     * Call all of the before callbacks and return if a result is given.
+     * Call all of the beforeAcl callbacks and return if a result is given.
      *
      * @param  \Illuminate\Contracts\Auth\Authenticatable  $user
      * @param  string  $context
@@ -152,9 +158,19 @@ class PolicyBuilder implements PolicyBuilderContract
         }
     }
 
+
     /**
-     * @param Builder $builder
-     * @param  \Illuminate\Contracts\Auth\Authenticatable $user
+     *
+     * Find out the policy associated to the model $modelClassName and then
+     * applies its beforeAcl method (if any) to the $builder adn the given $context.
+     * If no return is obtained, the policy's acl method is executed and the instantiated
+     * Eloquent Builder is returned.
+     *
+     * @param string $modelClassName
+     * @param Builder|null $builder
+     * @param string|null $context
+     * @param array $arguments
+     * @return Builder
      */
     public function acl($modelClassName, $builder = null, $context = null, $arguments = []) {
 
@@ -185,40 +201,53 @@ class PolicyBuilder implements PolicyBuilderContract
 
 
     /**
+     *
+     * Create the callback to be executed for the PolicyBuilder@all and PolicyBuilder@none methods.
+     * If they are not defined, either the $builder is returned as is ("all" $type) or the $builder is returned
+     * constrained with a filter for getting an empty query result ("none" $type)
+     *
+     * @param string $type ('all', 'none')
      * @param Builder $builder
+     * @param string $modelClassName
      * @return mixed
      */
     protected function buildBuilderMethod($type,$builder,$modelClassName = null) {
 
         if (!in_array($type,['all','none'])) {
-            throw new InvalidArgumentException('acl method type not allowed: it must be wither "all" or "none"');
+            throw new InvalidArgumentException('policy builder method type not allowed: it must be wither "all" or "none"');
         }
 
-        $aclType = Arr::get($this->builderMethods,$type);
+        $policyBuilderDefaultType = Arr::get($this->builderMethods,$type);
 
-        if (!is_null($aclType)) {
-            $aclTypeFunc = $aclType;
+
+        if (!is_null($policyBuilderDefaultType)) {
+            $aclTypeFunc = $policyBuilderDefaultType;
             return $aclTypeFunc($builder,$modelClassName);
         }
 
         switch ($type) {
             case 'all':
+                //$builder is returned with no constraints
                 return $builder;
             case 'none':
+                //$builder is returned with a "false" constraint which should return an empty result for a query
                 return $builder->whereRaw(0);
             default:
+                //Any other value acts as "none"
                 return $builder->whereRaw(0);
         }
     }
 
 
     /**
-     * Resolve and call the appropriate authorization callback.
+     * Resolve and call the appropriate policy's acl callback.
      *
      * @param  \Illuminate\Contracts\Auth\Authenticatable  $user
-     * @param  string  $ability
+     * @param  string  $modelClassName
+     * @param  Builder $builder
+     * @param  string $context
      * @param  array  $arguments
-     * @return bool
+     * @return Builder
      */
     protected function callAclCallback($user, $modelClassName, $builder, $context, array $arguments)
     {
@@ -229,10 +258,12 @@ class PolicyBuilder implements PolicyBuilderContract
 
 
     /**
-     * Resolve the callable for the given ability and arguments.
+     * Resolve the appropriate policy's acl callback if any.
      *
      * @param  \Illuminate\Contracts\Auth\Authenticatable  $user
-     * @param  string  $ability
+     * @param  string  $modelClassName
+     * @param  Builder $builder
+     * @param  string $context
      * @param  array  $arguments
      * @return callable
      */
@@ -249,10 +280,11 @@ class PolicyBuilder implements PolicyBuilderContract
     }
 
     /**
-     * Resolve the callback for a policy check.
+     * Resolve the appropriate policy's acl callback if any.
      *
      * @param  \Illuminate\Contracts\Auth\Authenticatable  $user
-     * @param  string  $ability
+     * @param  Builder $builder
+     * @param  string $context
      * @param  array  $arguments
      * @param  mixed  $policy
      * @return bool|callable
@@ -286,11 +318,12 @@ class PolicyBuilder implements PolicyBuilderContract
 
 
     /**
-     * Call the "before" method on the given policy, if applicable.
+     * Call the "beforeAcl" method on the given policy, if applicable.
      *
      * @param  mixed  $policy
      * @param  \Illuminate\Contracts\Auth\Authenticatable  $user
-     * @param  string  $ability
+     * @param  string $context
+     * @param  Builder $builder
      * @param  array  $arguments
      * @return mixed
      */
@@ -302,9 +335,9 @@ class PolicyBuilder implements PolicyBuilderContract
     }
 
     /**
-     * Format the policy ability into a method name.
+     * Format the requested list "context" into a method name.
      *
-     * @param  string  $ability
+     * @param  string  $context
      * @return string
      */
     protected function formatContextToAclMethod($context = null)
@@ -313,11 +346,25 @@ class PolicyBuilder implements PolicyBuilderContract
     }
 
 
-    public function all($builder,$modelClassName = null) {
+    /**
+     * Apply to $builder the "all" filters for getting a list of all models
+     *
+     * @param Builder $builder
+     * @param string|null $modelClassName
+     * @return mixed
+     */
+    public function all($builder, $modelClassName = null) {
         return $this->buildBuilderMethod('all', $builder, $modelClassName);
     }
 
-    public function none($builder,$modelClassName = null) {
+    /**
+     * Apply to $builder the "none" filters for getting an empty list of models
+     *
+     * @param Builder $builder
+     * @param string|null $modelClassName
+     * @return mixed
+     */
+    public function none($builder, $modelClassName = null) {
         return $this->buildBuilderMethod('none', $builder, $modelClassName);
     }
 

@@ -2,7 +2,6 @@
 
 namespace Gecche\PolicyBuilder;
 
-
 use Gecche\PolicyBuilder\Auth\Access\PolicyBuilder;
 use Gecche\PolicyBuilder\Contracts\PolicyBuilder as PolicyBuilderContract;
 

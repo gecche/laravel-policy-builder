@@ -10,3 +10,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Initial version for Laravel 5.5.
 
 [Unreleased]: https://github.com/gecche/laravel-policy-builder/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/gecche/laravel-policy-builder/releases/tag/v1.1.0
