@@ -24,6 +24,7 @@ A simple and convenient way to build allowed list of Eloquent models according t
  5.8.x    | 1.4.x
  6.x      | 2.x
  7.x      | 3.x
+ 8.x      | 4.x
 
 ### Installation
 
