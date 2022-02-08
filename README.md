@@ -34,7 +34,7 @@ Add gecche/laravel-policy-builder as a requirement to composer.json:
 ```javascript
 {
     "require": {
-        "gecche/laravel-policy-builder": "3.*"
+        "gecche/laravel-policy-builder": "5.*"
     }
 }
 ```
