@@ -26,6 +26,7 @@ A simple and convenient way to build allowed list of Eloquent models according t
  7.x      | 3.x
  8.x      | 4.x
  9.x      | 5.x
+ 10.x     | 10.x
 
 ### Installation
 
@@ -34,7 +35,7 @@ Add gecche/laravel-policy-builder as a requirement to composer.json:
 ```javascript
 {
     "require": {
-        "gecche/laravel-policy-builder": "5.*"
+        "gecche/laravel-policy-builder": "10.*"
     }
 }
 ```
