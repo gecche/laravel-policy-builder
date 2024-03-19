@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+## 11.0 - 2023-03-19
+### Changed
+- `composer.json` updated for Laravel 11
+
 ## 10.0 - 2023-02-21
 ### Changed
 - `composer.json` updated for Laravel 10
