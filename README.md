@@ -1,4 +1,5 @@
 [![License](http://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat-square)](https://tldrlegal.com/license/mit-license)
+[![Laravel](https://img.shields.io/badge/Laravel-11.x-orange.svg?style=flat-square)](http://laravel.com)
 [![Laravel](https://img.shields.io/badge/Laravel-10.x-orange.svg?style=flat-square)](http://laravel.com)
 [![Laravel](https://img.shields.io/badge/Laravel-9.x-orange.svg?style=flat-square)](http://laravel.com)
 [![Laravel](https://img.shields.io/badge/Laravel-8.x-orange.svg?style=flat-square)](http://laravel.com)
