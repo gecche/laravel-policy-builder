@@ -1,4 +1,4 @@
-<?php namespace Gecche\PolicyBuilder\Tests\Models;
+<?php namespace Gecche\PolicyBuilder\Tests\App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
  * @package Gecche\AclTest\Tests\Models
  *
  */
-class Author extends Model
+class Book extends Model
 {
 
     /**
@@ -16,7 +16,7 @@ class Author extends Model
      *
      * @var string
      */
-    protected $table = 'authors';
+    protected $table = 'books';
 
     /**
      * Indicates if the model should be timestamped.
@@ -26,5 +26,11 @@ class Author extends Model
     public $timestamps = false;
 
     public $guarded = ['id'];
+
+    public function author() {
+
+        return $this->belongsTo(Author::class, null, null, null);
+
+    }
 
 }
