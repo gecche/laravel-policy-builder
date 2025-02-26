@@ -1,4 +1,4 @@
-<?php namespace Gecche\PolicyBuilder\Tests\Models;
+<?php namespace Gecche\PolicyBuilder\Tests\App\Models;
 
 use Illuminate\Auth\Authenticatable;
 use Illuminate\Auth\Passwords\CanResetPassword;

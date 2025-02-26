@@ -9,12 +9,14 @@
 namespace Gecche\PolicyBuilder\Tests;
 
 use Gecche\PolicyBuilder\Facades\PolicyBuilder;
-use Gecche\PolicyBuilder\Tests\Models\Author;
-use Gecche\PolicyBuilder\Tests\Models\Book;
-use Gecche\PolicyBuilder\Tests\Models\User;
+use Gecche\PolicyBuilder\Tests\App\Models\Author;
+use Gecche\PolicyBuilder\Tests\App\Models\Book;
+use Gecche\PolicyBuilder\Tests\App\Models\User;
 use Gecche\PolicyBuilder\PolicyBuilderServiceProvider as ServiceProvider;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Auth;
+use Gecche\PolicyBuilder\Tests\App\TestServiceProvider;
+use Gecche\PolicyBuilder\Tests\App\AuthServiceProvider;
 
 class PolicyBuilderTestCase extends \Orchestra\Testbench\TestCase
 {

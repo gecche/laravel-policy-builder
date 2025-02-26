@@ -5,7 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
-## 11.0 - 2023-03-19
+## 12.0 - 2025-02-26
+### Changed
+- `composer.json` updated for Laravel 12
+
+## 11.0 - 2024-03-19
 ### Changed
 - `composer.json` updated for Laravel 11
 
@@ -47,8 +51,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 - Initial version for Laravel 5.5.
 
-[Unreleased]: https://github.com/gecche/laravel-policy-builder/compare/v11.0...HEAD
-[11.0]: https://github.com/gecche/laravel-policy-builder/compare/v11.0...v10.0
+[Unreleased]: https://github.com/gecche/laravel-policy-builder/compare/v12.0...HEAD
+[12.0]: https://github.com/gecche/laravel-policy-builder/compare/v11.0...v12.0
+[11.0]: https://github.com/gecche/laravel-policy-builder/compare/v10.0...v11.0
 [10.0]: https://github.com/gecche/laravel-policy-builder/compare/v5.0...v10.0
 [5.0]: https://github.com/gecche/laravel-policy-builder/compare/v4.0...v5.0
 [4.0]: https://github.com/gecche/laravel-policy-builder/compare/v3.0...v4.0

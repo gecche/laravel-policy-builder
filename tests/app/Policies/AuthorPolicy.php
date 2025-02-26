@@ -1,9 +1,9 @@
 <?php
 
-namespace Gecche\PolicyBuilder\Tests\Policies;
+namespace Gecche\PolicyBuilder\Tests\App\Policies;
 
 use Gecche\PolicyBuilder\Facades\PolicyBuilder;
-use Gecche\PolicyBuilder\Tests\Models\Author;
+use Gecche\PolicyBuilder\Tests\App\Models\Author;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Database\Eloquent\Builder;
 

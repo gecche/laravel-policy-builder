@@ -1,9 +1,9 @@
-<?php namespace Gecche\PolicyBuilder\Tests;
+<?php namespace Gecche\PolicyBuilder\Tests\App;
 
-use Gecche\PolicyBuilder\Tests\Models\Author;
-use Gecche\PolicyBuilder\Tests\Models\Book;
-use Gecche\PolicyBuilder\Tests\Policies\AuthorPolicy;
-use Gecche\PolicyBuilder\Tests\Policies\BookPolicy;
+use Gecche\PolicyBuilder\Tests\App\Models\Author;
+use Gecche\PolicyBuilder\Tests\App\Models\Book;
+use Gecche\PolicyBuilder\Tests\App\Policies\AuthorPolicy;
+use Gecche\PolicyBuilder\Tests\App\Policies\BookPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 use Gecche\PolicyBuilder\Facades\PolicyBuilder;
